@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-中文文稿写作 Agent 工具集 — 一套为 GitHub Copilot 设计的写作辅助工具。包含 13 个 Skill（直接修改文件）和 2 个 Agent（仅提供建议），覆盖从构思到润色的完整写作流程。
+中文文稿写作 Agent 工具集 — 一套为 GitHub Copilot 设计的写作辅助工具。包含 13 个 Skill（直接修改文件）和 3 个 Agent（仅提供建议），覆盖从构思到润色的完整写作流程。
 
 ## Architecture
 
@@ -14,7 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 .copilot/
 ├── agents/                          # Agent 定义（人格化，多轮对话，不修改文件）
 │   ├── 点子王.agent.md              # 创意写作顾问（头脑风暴）
-│   └── 批判家.agent.md              # 严苛文稿审核专家
+│   ├── 批判家.agent.md              # 严苛文稿审核专家
+│   └── 分析师.agent.md              # 文稿结构与逻辑分析专家
 └── skills/                          # Skill 定义（单次任务，直接修改文件）
     ├── 中心句/                      # 提炼段落中心句
     ├── 摘要生成/                    # 生成文章摘要
