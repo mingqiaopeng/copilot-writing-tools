@@ -81,6 +81,19 @@ foreach ($name in $Skills) {
     }
 }
 
+# ── 下载 README ──
+Write-Host ""
+Write-Host "[README]" -ForegroundColor Yellow
+$readmeUrl  = "$BaseUrl/README.md"
+$readmeDest = "$TargetDir\copilot-writing-tools-README.md"
+Write-Host "  $readmeUrl" -ForegroundColor Gray
+try {
+    Invoke-WebRequest -Uri $readmeUrl -OutFile $readmeDest -ErrorAction Stop | Out-Null
+    Write-Host "  [OK] copilot-writing-tools-README.md" -ForegroundColor Green
+} catch {
+    Write-Host "  [FAIL] README.md — $($_.Exception.Message)" -ForegroundColor Red
+}
+
 # ── 收尾 ──
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
@@ -88,8 +101,9 @@ Write-Host "  安装完成" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "已部署到: $TargetDir"
-Write-Host "  agents/   ($($Agents.Count) 个 Agent)"
-Write-Host "  skills/   ($($Skills.Count) 个 Skill)"
+Write-Host "  copilot-writing-tools-README.md  说明文档"
+Write-Host "  agents/                          ($($Agents.Count) 个 Agent)"
+Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
 Write-Host ""
 Write-Host "重启 VS Code 后生效。执行 Developer: Reload Window 亦可。" -ForegroundColor Gray
 Write-Host ""
