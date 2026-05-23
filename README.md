@@ -2,7 +2,21 @@
 
 一套专为中文写作设计的 **GitHub Copilot 自定义 Agent 与 Skill 工具集**，覆盖从头脑风暴、大纲规划、起草撰写到严格审核的完整写作流程。包含 **3 个自定义 Agent** 和 **13 个 Skill**。
 
-> 📦 本仓库中的文件应放置在项目根目录的 `.copilot/` 文件夹下（如 `.copilot/agents/`、`.copilot/skills/`），GitHub Copilot 在 VS Code 启动时自动扫描加载。
+> **前置条件**：安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。安装后，在 Copilot Chat 对话或编辑器内联对话中，Agent 与 Skill 将通过语义匹配自动触发调用。
+>
+> 💡 **推荐配置**：强烈建议将 GitHub Copilot 连接至 **DeepSeek V4** 模型使用，体验更佳。具体配置方法参见 [DeepSeek 官方文档](https://www.deepseek.com/)。
+
+---
+
+### ⚡ 一行命令安装
+
+```powershell
+irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
+```
+
+无需 clone，无需下载，打开 PowerShell 粘贴回车即可。Agent 与 Skill 将自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
+
+> 📦 用户亦可手动将仓库中的 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下，或复制到 `~/.copilot/` 实现全局安装。GitHub Copilot 在 VS Code 启动时自动扫描加载。
 
 ---
 
@@ -78,19 +92,12 @@ Agent 通过用户在 Agent 选择器中主动选择触发；Skill 通过**语�
 
 ## 🚀 快速开始
 
-### 安装
+### 手动安装
 
-**方式一：直接复制到项目（推荐）**
+用户亦可手动部署（无需网络、离线环境适用）：
 
-将 `.copilot/` 文件夹复制到你的项目根目录：
-
-```bash
-cp -r /path/to/文稿写作Agent工具集/.copilot ./
-```
-
-**方式二：安装到个人全局目录**
-
-复制到 `~/.copilot/skills/` 和 `~/.copilot/agents/`，对所有项目生效。
+- **按项目安装**：将 `agents/` 和 `skills/` 复制到项目根目录的 `.copilot/` 下，仅对当前项目生效。
+- **全局安装**：将 `agents/` 和 `skills/` 复制到 `~/.copilot/` 下，对所有项目生效。
 
 ### 激活
 

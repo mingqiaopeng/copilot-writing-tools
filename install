@@ -1,0 +1,95 @@
+# 中文文稿写作 Agent 工具集 一键安装脚本
+# 用法:
+#   irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
+# 本地执行:
+#   先改名为 install.ps1，再 .\install.ps1
+
+$RepoBranch = "master"
+$BaseUrl    = "https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/$RepoBranch"
+$TargetDir  = "$env:USERPROFILE\.copilot"
+
+$Agents = @(
+    "点子王.agent.md",
+    "批判家.agent.md",
+    "分析师.agent.md"
+)
+
+$Skills = @(
+    "中心句",
+    "摘要生成",
+    "标题优化",
+    "段落重组",
+    "大纲生成",
+    "增加过渡",
+    "缩减篇幅",
+    "扩充篇幅",
+    "合并段落",
+    "拆分段落",
+    "简化修辞",
+    "增加修辞",
+    "convert-md-to-plaintext"
+)
+
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "  中文文稿写作 Agent 工具集 一键安装" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "安装目标: $TargetDir" -ForegroundColor Gray
+Write-Host "数据来源: $BaseUrl" -ForegroundColor Gray
+Write-Host ""
+
+# ── 创建目录 ──
+Write-Host "[目录]" -ForegroundColor Yellow
+$dirs = @(
+    "$TargetDir\agents",
+    "$TargetDir\skills"
+)
+foreach ($dir in $dirs) {
+    Write-Host "  创建 $dir"
+    $null = New-Item -ItemType Directory -Force -Path $dir
+}
+
+# ── 下载 Agents ──
+Write-Host ""
+Write-Host "[Agents] ($($Agents.Count) 个)" -ForegroundColor Yellow
+foreach ($name in $Agents) {
+    $url  = "$BaseUrl/agents/$name"
+    $dest = "$TargetDir\agents\$name"
+    Write-Host "  $url" -ForegroundColor Gray
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] $name" -ForegroundColor Green
+    } catch {
+        Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# ── 下载 Skills ──
+Write-Host ""
+Write-Host "[Skills] ($($Skills.Count) 个)" -ForegroundColor Yellow
+foreach ($name in $Skills) {
+    $url  = "$BaseUrl/skills/$name/SKILL.md"
+    $dest = "$TargetDir\skills\$name\SKILL.md"
+    Write-Host "  $url" -ForegroundColor Gray
+    $null = New-Item -ItemType Directory -Force -Path "$TargetDir\skills\$name"
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] $name/SKILL.md" -ForegroundColor Green
+    } catch {
+        Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# ── 收尾 ──
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "  安装完成" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "已部署到: $TargetDir"
+Write-Host "  agents/   ($($Agents.Count) 个 Agent)"
+Write-Host "  skills/   ($($Skills.Count) 个 Skill)"
+Write-Host ""
+Write-Host "重启 VS Code 后生效。执行 Developer: Reload Window 亦可。" -ForegroundColor Gray
+Write-Host ""
