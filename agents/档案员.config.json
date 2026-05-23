@@ -2,5 +2,5 @@
   "esPath": "es.exe",
   "kbRoot": "~/Documents",
   "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
-  "excludePaths": ["ByCatalog", "ByDay", "写易"]
+  "excludePaths": ["示意目录A", "示意目录B"]
 }

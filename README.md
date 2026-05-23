@@ -72,7 +72,7 @@ Agent 通过用户在 Agent 选择器中主动选择触发；Skill 通过**语�
 ## 📁 文件结构
 
 ```
-.copilot/
+copilot-writing-tools/
 ├── agents/                                    # 🤖 自定义 Agent
 │   ├── 点子王.agent.md                        #   创意写作顾问
 │   ├── 批判家.agent.md                        #   严苛文稿审核专家
@@ -80,14 +80,22 @@ Agent 通过用户在 Agent 选择器中主动选择触发；Skill 通过**语�
 │   ├── 档案员.agent.md                        #   知识库检索专家（高级用户）
 │   └── 档案员.config.json                     #   档案员配置文件
 │
-└── skills/                                    # 🔧 Skill 包
-    ├── 中心句/           中心句提炼           ├── 摘要生成/         文章摘要生成
-    ├── 标题优化/         标题创作优化          ├── 段落重组/         段落顺序调整
-    ├── 大纲生成/         文章大纲规划          ├── 增加过渡/         过渡语句添加
-    ├── 缩减篇幅/         内容精简              ├── 扩充篇幅/         内容扩充丰富
-    ├── 合并段落/         相关段落合并          ├── 拆分段落/         长段落拆分
-    ├── 简化修辞/         修辞简化平实化        ├── 增加修辞/         修辞手法增强
-    └── convert-md-to-plaintext/   Markdown 转纯文本
+├── skills/                                    # 🔧 Skill 包
+│   ├── 中心句/           中心句提炼           ├── 摘要生成/         文章摘要生成
+│   ├── 标题优化/         标题创作优化          ├── 段落重组/         段落顺序调整
+│   ├── 大纲生成/         文章大纲规划          ├── 增加过渡/         过渡语句添加
+│   ├── 缩减篇幅/         内容精简              ├── 扩充篇幅/         内容扩充丰富
+│   ├── 合并段落/         相关段落合并          ├── 拆分段落/         长段落拆分
+│   ├── 简化修辞/         修辞简化平实化        ├── 增加修辞/         修辞手法增强
+│   └── convert-md-to-plaintext/   Markdown 转纯文本
+│
+├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
+│   ├── index.js                               #   主程序（es.exe + rg 桥接）
+│   └── package.json                           #   依赖配置
+│
+├── install                                    # 📦 一键安装脚本
+├── README.md                                  # 📖 项目说明
+└── CLAUDE.md                                  # 🤖 Claude Code 配置
 ```
 
 ---
@@ -301,7 +309,7 @@ description: |
 
 | 工具 | 用途 | 安装方式 |
 |------|------|---------|
-| [Everything](https://www.voidtools.com/) | 文件名极速搜索（内存索引） | 下载安装，确保 `es.exe` 在系统 PATH 中 |
+| [Everything](https://www.voidtools.com/) | 文件名极速搜索（内存索引） | `winget install voidtools.Everything` 或从 [voidtools.com](https://www.voidtools.com/) 下载安装。确保 `es.exe` 在系统 PATH 中（es.exe 随 Everything 安装包提供，CLI 用法详见 Everything 主页） |
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | 文件内容精确搜索 | `winget install BurntSushi.ripgrep.MSVC` 或 `scoop install rg` |
 
 可选：如未安装 rg，档案员将自动退回到 PowerShell 内置的 `Select-String`。
@@ -355,7 +363,9 @@ npm install
 ```json
 {
   "esPath": "es.exe",
-  "kbRoot": "D:/我的知识库"
+  "kbRoot": "D:/我的知识库",
+  "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
+  "excludePaths": ["ByCatalog", "ByDay", "写易"]
 }
 ```
 
