@@ -1,6 +1,6 @@
 # ✍️ 中文文稿写作 Agent 工具集
 
-一套专为中文写作设计的 **GitHub Copilot 自定义 Agent 与 Skill 工具集**，覆盖从头脑风暴、大纲规划、起草撰写到严格审核的完整写作流程。包含 **3 个自定义 Agent** 和 **13 个 Skill**。
+一套专为中文写作设计的 **GitHub Copilot 自定义 Agent 与 Skill 工具集**，覆盖从头脑风暴、大纲规划、起草撰写到严格审核的完整写作流程。包含 **4 个自定义 Agent** 和 **13 个 Skill**。
 
 > **前置条件**：安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。安装后，在 Copilot Chat 对话或编辑器内联对话中，Agent 与 Skill 将通过语义匹配自动触发调用。
 >
@@ -76,7 +76,9 @@ Agent 通过用户在 Agent 选择器中主动选择触发；Skill 通过**语�
 ├── agents/                                    # 🤖 自定义 Agent
 │   ├── 点子王.agent.md                        #   创意写作顾问
 │   ├── 批判家.agent.md                        #   严苛文稿审核专家
-│   └── 分析师.agent.md                        #   文稿结构与逻辑分析专家
+│   ├── 分析师.agent.md                        #   文稿结构与逻辑分析专家
+│   ├── 档案员.agent.md                        #   知识库检索专家（高级用户）
+│   └── 档案员.config.json                     #   档案员配置文件
 │
 └── skills/                                    # 🔧 Skill 包
     ├── 中心句/           中心句提炼           ├── 摘要生成/         文章摘要生成
@@ -137,6 +139,16 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | 角色 | 冷静缜密的结构解剖师，像剥洋葱一样拆解文稿层次 |
 | 维度 | 语义层次拆解 → 逻辑关系梳理 → 结构诊断 → 缺失分析 |
 | 输出 | 层次结构图 + 逻辑关系表 + 诊断报告 + 重构方案 |
+
+### 📁 档案员 — 知识库检索专家
+
+| 属性 | 说明 |
+|------|------|
+| 触发词 | 找资料、帮我找、查一下、库里有没有、搜文档、帮我核实 |
+| 角色 | 沉稳严谨的档案管理员，自主拆词渐进搜索，锁定 3-5 篇最相关资料 |
+| 工具 | es.exe（文件名搜索）+ rg/Select-String（内容搜索） |
+| 输出 | 匹配段落原文 + 可点击文件链接 |
+| ⚠️ 注意 | **不建议普通用户安装**，需额外配置 Everything + MCP 终端服务器，详见下方档案员配置说明 |
 
 ---
 
@@ -276,6 +288,88 @@ description: |
 3. **先构思后审核**：写作前用点子王发散思维，写作后用批判家严格把关
 4. **按需组合**：根据文章类型选择合适的 Skill 组合
 5. **人工审核不可少**：AI 生成的修改建议应经过人工确认
+
+---
+
+## 📁 档案员配置说明（高级用户）
+
+> ⚠️ **不建议普通用户安装**。档案员 Agent 需要额外的本地工具和 MCP 服务器配置，仅推荐有命令行经验且已搭建本地 Markdown 知识库的用户使用。
+
+### 前置条件
+
+档案员依赖以下本地工具：
+
+| 工具 | 用途 | 安装方式 |
+|------|------|---------|
+| [Everything](https://www.voidtools.com/) | 文件名极速搜索（内存索引） | 下载安装，确保 `es.exe` 在系统 PATH 中 |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | 文件内容精确搜索 | `winget install BurntSushi.ripgrep.MSVC` 或 `scoop install rg` |
+
+可选：如未安装 rg，档案员将自动退回到 PowerShell 内置的 `Select-String`。
+
+### MCP 服务器配置
+
+档案员通过自定义 MCP 服务器 `local-search-mcp-server` 执行搜索命令。该服务器随本仓库提供，位于 `local-search-mcp-server/` 目录下。
+
+**1. 安装 MCP 服务器依赖：**
+
+```powershell
+cd local-search-mcp-server
+npm install
+```
+
+**2. 在 VS Code 中启用 MCP：**
+
+打开 VS Code 设置（`Ctrl+,`），确保以下选项已开启：
+
+```json
+{
+  "chat.mcp.access": true,
+  "chat.mcp.autostart": true
+}
+```
+
+**3. 注册 MCP 服务器：**
+
+编辑 VS Code 用户级 MCP 配置文件 `%APPDATA%\Code\User\mcp.json`（全局生效）：
+
+```json
+{
+  "servers": {
+    "local-search-mcp-server": {
+      "command": "node",
+      "type": "stdio",
+      "args": [
+        "C:\\Users\\<你的用户名>\\.copilot\\local-search-mcp-server\\index.js"
+      ]
+    }
+  }
+}
+```
+
+> 如使用一键安装脚本，MCP 服务器会自动下载到 `~/.copilot/local-search-mcp-server/`，配置会自动合并到 `%APPDATA%\Code\User\mcp.json`（已有配置不丢失，原文件自动备份）。
+
+**4. 配置知识库路径：**
+
+编辑 `~/.copilot/agents/档案员.config.json`，将 `kbRoot` 设为你的 Markdown 文档库根目录：
+
+```json
+{
+  "esPath": "es.exe",
+  "kbRoot": "D:/我的知识库"
+}
+```
+
+**5. 重启 VS Code**，在 Agent 选择器中切换到「档案员」即可使用。
+
+### 一键安装（含档案员）
+
+安装脚本支持可选安装档案员，运行时会询问：
+
+```powershell
+irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
+```
+
+根据提示选择 `y` 安装档案员，脚本将自动下载 Agent 文件、MCP 服务器及依赖，并生成 `mcp-config.json`。
 
 ---
 

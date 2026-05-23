@@ -94,7 +94,139 @@ try {
     Write-Host "  [FAIL] README.md — $($_.Exception.Message)" -ForegroundColor Red
 }
 
+# ── 档案员（可选） ──
+Write-Host ""
+Write-Host "============================================" -ForegroundColor DarkYellow
+Write-Host "  [可选] 档案员 Agent — 本地知识库检索" -ForegroundColor DarkYellow
+Write-Host "============================================" -ForegroundColor DarkYellow
+Write-Host ""
+Write-Host "档案员需要额外配置 Everything (es.exe)、ripgrep (rg) 和 MCP 服务器" -ForegroundColor Gray
+Write-Host "仅推荐高级用户安装。详见 README 中档案员配置说明。" -ForegroundColor Gray
+Write-Host ""
+
+$installArchivist = Read-Host "是否安装档案员？(y/n，默认 n)"
+if ($installArchivist -ne 'y' -and $installArchivist -ne 'Y') {
+    Write-Host "  已跳过档案员安装。" -ForegroundColor Gray
+} else {
+    # 下载档案员 Agent 文件
+    Write-Host ""
+    Write-Host "[档案员 Agent]" -ForegroundColor Yellow
+    $archivistFiles = @(
+        "档案员.agent.md",
+        "档案员.config.json"
+    )
+    foreach ($name in $archivistFiles) {
+        $url  = "$BaseUrl/agents/$name"
+        $dest = "$TargetDir\agents\$name"
+        Write-Host "  $url" -ForegroundColor Gray
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+            Write-Host "  [OK] $name" -ForegroundColor Green
+        } catch {
+            Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+        }
+    }
+
+    # 下载 MCP 服务器文件
+    Write-Host ""
+    Write-Host "[MCP 服务器] local-search-mcp-server" -ForegroundColor Yellow
+    $mcpDir = "$TargetDir\local-search-mcp-server"
+    $null = New-Item -ItemType Directory -Force -Path $mcpDir
+    $mcpFiles = @("index.js", "package.json")
+    foreach ($name in $mcpFiles) {
+        $url  = "$BaseUrl/local-search-mcp-server/$name"
+        $dest = "$mcpDir\$name"
+        Write-Host "  $url" -ForegroundColor Gray
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+            Write-Host "  [OK] $name" -ForegroundColor Green
+        } catch {
+            Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+        }
+    }
+
+    # npm install
+    Write-Host ""
+    Write-Host "  正在安装 MCP 服务器依赖 (npm install)..." -ForegroundColor Gray
+    Push-Location $mcpDir
+    npm install --production
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  [WARN] npm install 失败，请手动在 $mcpDir 中执行 npm install" -ForegroundColor Yellow
+    } else {
+        Write-Host "  [OK] 依赖安装完成" -ForegroundColor Green
+    }
+    Pop-Location
+
+    # MCP 配置文件 — 智能合并到 VS Code 的 mcp.json
+    Write-Host ""
+    Write-Host "  正在配置 MCP 服务器..." -ForegroundColor Gray
+    $vsCodeMcpPath = "$env:APPDATA\Code\User\mcp.json"
+    $indexPath = "$mcpDir\index.js"
+
+    # 确保目录存在
+    $null = New-Item -ItemType Directory -Force -Path (Split-Path $vsCodeMcpPath -Parent)
+
+    # 读取已有配置（如存在）
+    $existingConfig = $null
+    if (Test-Path $vsCodeMcpPath) {
+        try {
+            $existingConfig = Get-Content -Raw -Path $vsCodeMcpPath | ConvertFrom-Json
+            Write-Host "  检测到已有 MCP 配置，将自动合并。" -ForegroundColor Gray
+        } catch {
+            Write-Host "  [WARN] 现有 mcp.json 格式异常，将备份后覆盖。" -ForegroundColor Yellow
+            Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
+            $existingConfig = $null
+        }
+    }
+
+    # 构建或合并 servers 节点
+    if ($existingConfig -and $existingConfig.servers) {
+        $existingConfig.servers | Add-Member -MemberType NoteProperty -Name "local-search-mcp-server" -Value @{
+            command = "node"
+            type    = "stdio"
+            args    = @($indexPath)
+        } -Force
+        $mergedConfig = $existingConfig
+    } else {
+        $mergedConfig = @{
+            servers = @{
+                "local-search-mcp-server" = @{
+                    command = "node"
+                    type    = "stdio"
+                    args    = @($indexPath)
+                }
+            }
+        }
+    }
+
+    try {
+        # 备份原文件
+        if (Test-Path $vsCodeMcpPath) {
+            Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
+        }
+        $mergedConfig | ConvertTo-Json -Depth 4 | Out-File -FilePath $vsCodeMcpPath -Encoding UTF8 -Force
+        Write-Host "  [OK] MCP 配置已写入 $vsCodeMcpPath" -ForegroundColor Green
+        if (Test-Path "$vsCodeMcpPath.bak") {
+            Write-Host "  原配置已备份至 $vsCodeMcpPath.bak" -ForegroundColor Gray
+        }
+    } catch {
+        Write-Host "  [FAIL] 无法写入 MCP 配置文件 — $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  请手动将以下内容添加到 $vsCodeMcpPath ：" -ForegroundColor Yellow
+        $mcpSnippet = @{
+            servers = @{
+                "local-search-mcp-server" = @{
+                    command = "node"
+                    type    = "stdio"
+                    args    = @($indexPath)
+                }
+            }
+        }
+        Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
+    }
+}
+
 # ── 收尾 ──
+$agentCount = if ($installArchivist -eq 'y' -or $installArchivist -eq 'Y') { 4 } else { 3 }
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  安装完成" -ForegroundColor Cyan
@@ -102,8 +234,12 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "已部署到: $TargetDir"
 Write-Host "  copilot-writing-tools-README.md  说明文档"
-Write-Host "  agents/                          ($($Agents.Count) 个 Agent)"
+Write-Host "  agents/                          ($agentCount 个 Agent)"
 Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
+if ($installArchivist -eq 'y' -or $installArchivist -eq 'Y') {
+    Write-Host "  local-search-mcp-server/         MCP 服务器"
+    Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
+}
 Write-Host ""
 Write-Host "重启 VS Code 后生效。执行 Developer: Reload Window 亦可。" -ForegroundColor Gray
 Write-Host ""
