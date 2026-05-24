@@ -68,9 +68,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Skill 名称即目录名，与 frontmatter `name` 一致
 - 大部分为纯声明式配置，无构建系统或测试框架。`local-search-mcp-server/` 为 Node.js 项目，有 `package.json` 依赖（`npm install` 安装）
 
+### Skill 触发词设计原则
+
+- **避免高频通用词**：如"修改"、"检查"在日常对话中出现频率过高，会误触发。触发词应精准、特化，与 Skill 核心行为强关联（如"按勘误表修改"而非"帮我改"）
+- **宁缺毋滥**：触发词数量控制在 6 个左右即可，不做关键词堆砌
+
+### Skill↔Agent 解耦
+
+- SKILL.md 中引用 Agent 时，统一用「其他 Agent」，不点名具体 Agent 名称
+- 避免产生"是不是有个叫 X 的 Agent"的歧义，保持 Skill 和 Agent 相互独立
+
+### Agent↔Skill 互推机制
+
+- 每个 Agent 的「注意事项」末尾应包含 Skill 推荐逻辑：根据诊断结果，主动推荐可用的 Skill
+- 形成「诊断 → 推荐 → 修改」闭环
+- 新增 Agent 或 Skill 时，需同步检查相关 Agent 的推荐列表是否需要更新
+
+### 勘误表规范（批判家 → 校对勘误）
+
+- 勘误表位于审核报告末尾（总体结论之后），为「校对勘误」Skill 的唯一输入源
+- 格式：`| # | 行号 | 原表述 | 更正表述 | 等级 |`，四列缺一不可
+- **强制铁律**：输出勘误表前必须逐条核实行号与原文完全一致，不得有偏差
+- 批判家输出末尾附带触发提示语：「按勘误表修改」
+
+### 校对勘误 Skill 的上下文回溯机制
+
+- 不通过参数接收勘误表，而是回溯对话历史，定位最近的勘误表
+- 按行号升序排列后逐条执行，避免行号偏移
+- 若对话中无勘误表，告知用户而非自行发挥
+
+### README 表格规范
+
+- README 中表格统一使用 HTML `<table width="100%">` + 百分比列宽，保持视觉一致性
+- 提示区块使用 GitHub Alerts 格式（`[!NOTE]` / `[!TIP]` / `[!WARNING]`）
+
 ## Common Development Tasks
 
 - **新增 Skill**: 在 `skills/` 下创建目录 `技能名/SKILL.md`，参考现有 SKILL.md 的 frontmatter 和章节结构
 - **新增 Agent**: 在 `agents/` 下创建 `名称.agent.md`，注意需要 `tools` 和 `target` 字段，且遵循"不修改文件"原则
 - **修改触发词**: 编辑 frontmatter `description` 中的 `触发条件` 列表
 - **验证格式**: 检查 YAML frontmatter 分隔符 `---` 是否正确，`description` 中的缩进是否一致
+- **新增 Agent↔Skill 互推**：新增 Skill 后，检查是否有 Agent 应在诊断后推荐该 Skill，更新对应 Agent 的「注意事项」推荐列表；新增 Agent 后，检查其诊断结果能否关联现有 Skill，加入推荐逻辑
