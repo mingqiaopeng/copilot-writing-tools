@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-中文文稿写作 Agent 工具集 — 一套为 GitHub Copilot 设计的写作辅助工具。包含 13 个 Skill（直接修改文件）和 4 个 Agent（仅提供建议），覆盖从构思到润色的完整写作流程。
+中文文稿写作 Agent 工具集 — 一套为 GitHub Copilot 设计的写作辅助工具。包含 14 个 Skill（直接修改文件）和 4 个 Agent（仅提供建议），覆盖从构思到润色的完整写作流程。
 
 ## Architecture
 
@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 │   ├── 档案员.agent.md              # 知识库检索专家（高级用户）
 │   └── 档案员.config.json           # 档案员配置文件
 └── skills/                          # Skill 定义（单次任务，直接修改文件）
-    ├── 中心句/                      # 提炼段落中心句
+    ├── 写中心句/                    # 提炼段落中心句
     ├── 摘要生成/                    # 生成文章摘要
     ├── 标题优化/                    # 优化文章标题（确认后修改）
     ├── 段落重组/                    # 调整段落顺序（确认后修改）
@@ -31,7 +31,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     ├── 拆分段落/                    # 拆分过长段落
     ├── 简化修辞/                    # 简化华丽修辞
     ├── 增加修辞/                    # 增加修辞手法
-    └── convert-md-to-plaintext/     # Markdown 转纯文本
+    ├── 去除标签/                    # 去除Markdown标签
+    └── 校对勘误/                    # 按勘误表逐条修改
 ```
 
 ### Key Distinctions
@@ -65,7 +66,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **标题优化 / 段落重组 / 大纲生成** 等待用户确认后再修改文件（其他 skill 直接修改）
 - 所有文件名和内容均为中文
 - Skill 名称即目录名，与 frontmatter `name` 一致
-- 没有构建系统、测试框架或依赖管理 — 这是纯声明式配置
+- 大部分为纯声明式配置，无构建系统或测试框架。`local-search-mcp-server/` 为 Node.js 项目，有 `package.json` 依赖（`npm install` 安装）
 
 ## Common Development Tasks
 
