@@ -76,13 +76,14 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 
 ### 🆚 现有方案对比
 
-| 类型 | 代表产品 | 优势 | 短板 |
-|------|---------|------|------|
-| 🌐 Web 写作助手 | 秘塔写作猫、笔灵 AI | 模板丰富、开箱即用 | 独立网页，无法嵌入编辑器；擅长改写而非原创 |
-| 💬 大模型对话 | 通义千问、文心一言 | 通用能力强、超长上下文 | 无结构化写作流程；输出质量依赖 prompt 技巧 |
-| 📎 办公插件 | 火龙果 Pitaya、火山写作 | 嵌入 Word/WPS，校对便捷 | 聚焦润色和校阅，缺乏构思和结构分析能力 |
-| 📖 AI 小说工具 | novel-writer、InkOS | 长文本管线成熟，多 Agent 协作 | 面向网文小说，非虚构文稿场景不适用 |
-| 🔌 Copilot 扩展 | awesome-copilot 社区 | Agent Skills 开放规范，175+ Agent | **尚无任何中文写作 Agent/Skill** |
+<table width="100%">
+<tr><th width="15%">类型</th><th width="20%">代表产品</th><th width="30%">优势</th><th width="35%">短板</th></tr>
+<tr><td>🌐 Web 写作助手</td><td>秘塔写作猫、笔灵 AI</td><td>模板丰富、开箱即用</td><td>独立网页，无法嵌入编辑器；擅长改写而非原创</td></tr>
+<tr><td>💬 大模型对话</td><td>通义千问、文心一言</td><td>通用能力强、超长上下文</td><td>无结构化写作流程；输出质量依赖 prompt 技巧</td></tr>
+<tr><td>📎 办公插件</td><td>火龙果 Pitaya、火山写作</td><td>嵌入 Word/WPS，校对便捷</td><td>聚焦润色和校阅，缺乏构思和结构分析能力</td></tr>
+<tr><td>📖 AI 小说工具</td><td>novel-writer、InkOS</td><td>长文本管线成熟，多 Agent 协作</td><td>面向网文小说，非虚构文稿场景不适用</td></tr>
+<tr><td>🔌 Copilot 扩展</td><td>awesome-copilot 社区</td><td>Agent Skills 开放规范，175+ Agent</td><td><strong>尚无任何中文写作 Agent/Skill</strong></td></tr>
+</table>
 
 ---
 
@@ -94,40 +95,42 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 
 **核心考量：**
 
-| # | 要点 | 说明 |
-|---|------|------|
-| 🖥️ | **一体化平台** | VS Code 的文件管理、编辑器、终端、扩展市场、Git 集成，加上 Copilot Chat 的 AI 对话面板，天然构成了写作工作台的全部要素。构思、起草、修改、审核、版本管理，不切换软件 |
-| 🌐 | **最流行的文本编辑器** | 全球市场占有率第一，中文支持完善，启动快、性能优良，社区活跃、插件生态丰富 |
-| 💰 | **零费用可用** | GitHub Copilot 免费额度足以覆盖轻度到中度使用，无需额外订阅任何付费 AI 服务 |
-| 🔒 | **支持本地模型与离线部署** | 可接入本地大模型和私有算力，在内网环境中不联网运行，满足对数据安全有严格要求的写作场景 |
+<table width="100%">
+<tr><td width="5%">🖥️</td><td width="20%"><strong>一体化平台</strong></td><td>VS Code 的文件管理、编辑器、终端、扩展市场、Git 集成，加上 Copilot Chat 的 AI 对话面板，天然构成了写作工作台的全部要素。构思、起草、修改、审核、版本管理，不切换软件</td></tr>
+<tr><td>🌐</td><td><strong>最流行的文本编辑器</strong></td><td>全球市场占有率第一，中文支持完善，启动快、性能优良，社区活跃、插件生态丰富</td></tr>
+<tr><td>💰</td><td><strong>零费用可用</strong></td><td>GitHub Copilot 免费额度足以覆盖轻度到中度使用，无需额外订阅任何付费 AI 服务</td></tr>
+<tr><td>🔒</td><td><strong>支持本地模型与离线部署</strong></td><td>可接入本地大模型和私有算力，在内网环境中不联网运行，满足对数据安全有严格要求的写作场景</td></tr>
+</table>
 
 **技术栈：**
 
-| 层面 | 选择 | 理由 |
-|------|------|------|
-| 🖥️ 平台 | VS Code + GitHub Copilot Chat | 全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口 |
-| 📐 规范 | Agent Skills 开放规范（`SKILL.md` + `.agent.md`） | 三层渐进加载，14 个 Skill 启动仅需约 1400-2800 token |
-| 🧠 触发 | 语义匹配 | 用户说人话，模型自动匹配 Skill，无需记命令 |
-| 🔍 搜索 | Everything (es.exe) + ripgrep | 纯本地、零延迟的文件名与内容搜索，无需向量数据库 |
+<table width="100%">
+<tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
+<tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，14 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
+<tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
+</table>
 
 **Agent↔Skill 分离设计：**
 
-| 角色 | 数量 | 职责 | 原则 |
-|------|------|------|------|
-| 🤖 Agent | 4 个 | 头脑风暴、结构分析、文稿审核、知识库检索 | **只诊断，不修改文件** |
-| 🔧 Skill | 14 个 | 中心句提炼、段落重组、校对勘误、标题优化…… | **确认或直接修改文件** |
-| 🔗 互推 | — | Agent 诊断完成后主动推荐可用 Skill | **诊断 → 修改 闭环** |
+<table width="100%">
+<tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
+<tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>14 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
+</table>
 
 **核心优势：**
 
-| # | 优势 | 说明 |
-|---|------|------|
-| 🔄 | **全流程覆盖** | 从头脑风暴到最终校对，14 个 Skill 覆盖写作每个环节，无需切换工具 |
-| 🔬 | **结构化诊断** | 分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二 |
-| 📝 | **出版级审核** | 批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表 |
-| 🏠 | **本地优先** | 所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep |
-| ⚡ | **极低上下文开销** | 基于三层渐进加载，14 个 Skill 启动约 1400-2800 token，比传统方案节省约 90% |
-| 🗣️ | **自然语言驱动** | "帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发 |
+<table width="100%">
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，14 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
+<tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
+<tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，14 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
+<tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
+</table>
 
 ---
 
