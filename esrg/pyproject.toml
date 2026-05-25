@@ -1,0 +1,18 @@
+[project]
+name = "esrg"
+version = "1.0.0"
+description = "Standalone TUI knowledge base search tool — ES (Everything) filename search + RG (ripgrep) content search"
+requires-python = ">=3.10"
+dependencies = [
+    "textual>=0.52.0",
+]
+
+[project.scripts]
+esrg = "esrg.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
