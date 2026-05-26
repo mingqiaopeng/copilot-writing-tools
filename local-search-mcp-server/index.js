@@ -181,8 +181,8 @@ function deduplicate(rawOutput) {
   }
   const lines = rawOutput.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   log(`[去重] 输入 ${lines.length} 行`);
-  const excludePattern = new RegExp(config.excludePaths.map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|"));
-  const filtered = lines.filter(p => !excludePattern.test(p));
+  const excludePattern = config.excludePaths.length > 0 ? new RegExp(config.excludePaths.map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|")) : null;
+  const filtered = excludePattern ? lines.filter(p => !excludePattern.test(p)) : lines;
   const dropped1 = lines.length - filtered.length;
   if (dropped1 > 0) log(`[去重] 路径排除(${config.excludePaths.join(", ")})过滤掉 ${dropped1} 条`);
   const seen = new Map();

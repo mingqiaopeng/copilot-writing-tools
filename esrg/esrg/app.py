@@ -57,10 +57,13 @@ class ResultItem(ListItem):
             text += f" [dim]({self.match_count} 处匹配)[/]"
         text += f"\n[{g2}]│[/] [dim]{dname}[/]"
         if self.snippet:
-            snip = self.snippet.strip()
-            if len(snip) > 60:
-                snip = snip[:57] + "..."
-            text += f"\n[{g3}]│[/] {self._highlight_snippet(snip, self.pattern)}"
+            raw = self.snippet.strip()
+            if len(raw) > 60:
+                if self.pattern:
+                    raw = self._truncate_around_match(raw, self.pattern, 60)
+                else:
+                    raw = raw[:57] + "..."
+            text += f"\n[{g3}]│[/] {self._highlight_snippet(raw, self.pattern)}"
         return text
 
     @staticmethod
@@ -86,6 +89,32 @@ class ResultItem(ListItem):
         if last_end < len(snippet):
             parts.append(f"[dim]{ResultItem._escape_markup(snippet[last_end:])}[/]")
         return "".join(parts)
+
+    @staticmethod
+    def _truncate_around_match(text: str, pattern: str, max_len: int = 60) -> str:
+        """截断到 max_len，但确保第一个匹配关键词完整可见。"""
+        if len(text) <= max_len:
+            return text
+        try:
+            m = re.search(pattern, text, re.IGNORECASE)
+        except re.error:
+            return text[: max_len - 3] + "..."
+        if not m:
+            return text[: max_len - 3] + "..."
+        CONTEXT = 20
+        avail = max_len - 3  # 留给 "…" 标记
+        start = max(0, m.start() - CONTEXT)
+        end = min(len(text), start + avail)
+        if end < m.end():
+            end = min(len(text), m.end() + (avail // 4))
+            start = max(0, end - avail)
+        result = ""
+        if start > 0:
+            result += "…"
+        result += text[start:end]
+        if end < len(text):
+            result += "…"
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -286,6 +315,7 @@ class SearchScreen(Screen):
         elif fid == "rg-input":
             results = self.query_one("#results", ListView)
             if results.display and results.children:
+                results.index = 0
                 self.set_focus(results)
             else:
                 self.set_focus(self.query_one("#es-input", Input))
@@ -476,11 +506,24 @@ class SearchScreen(Screen):
                 snippet = self._first_snippet(match_text)
             results.mount(ResultItem(fp, match_count=mc, snippet=snippet, pattern=pattern))
         if capped:
-            results.index = 0
-            first = results.children[0]
-            if isinstance(first, ResultItem):
-                first.set_highlighted(True)
-                self._last_highlighted = first
+            # 延迟到 mount 渲染完成后设置高亮，避免 @work 协程中的时序冲突
+            self.set_timer(0, self._highlight_first_result)
+
+    def _highlight_first_result(self) -> None:
+        """DOM 就绪后将高亮设到第一个结果。"""
+        results = self.query_one("#results", ListView)
+        if not results.children:
+            return
+        # 复位 _index 以确保 index=0 触发 Highlighted 事件
+        results._index = None
+        results.index = 0
+        # 单条目时 ListView 可能不触发 Highlighted，手动确保视觉高亮
+        first = results.children[0]
+        if isinstance(first, ResultItem):
+            if self._last_highlighted is not None and self._last_highlighted is not first:
+                self._last_highlighted.set_highlighted(False)
+            first.set_highlighted(True)
+            self._last_highlighted = first
 
     # ------------------------------------------------------------------
     # Enter on result → copy path to clipboard

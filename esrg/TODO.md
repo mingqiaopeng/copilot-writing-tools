@@ -1,14 +1,13 @@
 # TODO
 
-## 已知问题
+## 已修复
 
-### 1. Tab 键切换到文件列表首行选中仍有问题
+### 1. Tab 键切换到文件列表首行选中问题 — 已修复
 
-- **现象**：Tab 从 RG 输入框切到结果列表时，首行未自动高亮（红色竖条不显示）。需要按 ↓ 再按 ↑ 才能选中第一项。列表仅有一项时完全无法选中。
-- **原因**：`_populate_results` 中手动 `set_highlighted(True)` 与 `results.index = 0` 触发的 `ListView.Highlighted` 事件存在时序冲突，`@work` 线程中 reactive 消息可能延后处理，导致高亮被覆盖。
+- **原因**：`results.clear()` 不重置 `ListView._index`，导致 `results.index = 0` 为 no-op 不触发 `Highlighted` 事件，手动 `set_highlighted` 被后续 DOM 重绘覆盖。
+- **修复**：在 `_populate_results` 中先设 `_index = None` 再设 `index = 0`，确保 `Highlighted` 事件可靠触发。
 
-### 2. 内容匹配的截断显示仍有问题
+### 2. 内容匹配截断关键词丢失 — 已修复
 
-- **现象**：命中文段截断到 60 字符后，加上 `[bold red]` 等 Rich markup 标签会使实际渲染长度超出终端一行。
-- **原因**：截断在 `_build_text()` 中对原始 snippet 执行，后续 `_highlight_snippet` 插入 markup 标签导致渲染宽度增加。
-- **方向**：在 `_highlight_snippet` 内部截断，或截断时预留 markup 标签空间。
+- **原因**：`snip[:57] + "..."` 简单截断可能把匹配关键词截掉。
+- **修复**：新增 `_truncate_around_match()`，以第一个匹配位置为中心取左右各 20/37 字符，确保关键词始终可见。
