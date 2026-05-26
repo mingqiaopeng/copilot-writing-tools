@@ -354,6 +354,7 @@ class SearchScreen(Screen):
             search_filenames,
             search_content_global,
             search_content_in_files_batch,
+            search_combined_es,
         )
 
         es_path = self.cfg["esPath"]
@@ -414,6 +415,14 @@ class SearchScreen(Screen):
                     f"请先输入文件名关键词缩小范围[/]"
                 )
                 return
+            if method == "es_no_match":
+                self._populate_results(results, [], pattern=rg_text)
+                status.update(
+                    "[yellow]Everything 内容搜索无匹配结果。"
+                    "若期望有匹配，请检查 Everything 中是否已启用内容索引"
+                    "（工具 → 选项 → 内容）[/]"
+                )
+                return
             self._populate_results(results, files, pattern=rg_text)
             method_label = (
                 "Everything 内容索引" if method == "es" else "rg 递归"
@@ -432,6 +441,31 @@ class SearchScreen(Screen):
 
         else:
             # Mode C: both — ES narrows, RG filters within
+            content_search_enabled = self.cfg.get("ES_ContentSearchEnabled", False)
+
+            if content_search_enabled:
+                # ES 内容索引已启用：一次 ES 查询搞定文件名+内容条件
+                files, method = await search_combined_es(
+                    es_path, kb_root, es_text, rg_text, exclude
+                )
+                if method == "es_no_match":
+                    self._populate_results(results, [], pattern=rg_text)
+                    status.update(
+                        "[yellow]合并搜索无匹配结果，换一组关键词试试[/]"
+                    )
+                    return
+                self._populate_results(results, files, pattern=rg_text)
+                if not files:
+                    status.update("[red]未找到匹配文件，换个关键词试试[/]")
+                elif len(files) > MAX_DISPLAY:
+                    status.update(
+                        f"[yellow]显示前 {MAX_DISPLAY} 条（共 {len(files)} 条）—— 请缩小范围[/]"
+                    )
+                else:
+                    status.update(f"[green]找到 {len(files)} 个文件[/]（通过 Everything 内容索引）")
+                return
+
+            # ES 内容索引未开启：两步走（ES 文件名缩小范围 → rg 内容过滤）
             files = await search_filenames(es_path, kb_root, es_text, exclude)
 
             if not files:

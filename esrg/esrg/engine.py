@@ -208,15 +208,21 @@ async def search_content_global(
     """Mode B: Global content search.
     - If ES_ContentSearchEnabled, use es.exe content: (Everything index).
     - Otherwise, use rg -l recursive only if total_md_count < RG_GLOBAL_LIMIT.
-    Returns (file_list, method_used). method may be "es", "rg", or "blocked".
+    Returns (file_list, method_used). method may be "es", "es_no_match", "rg", or "blocked".
     """
     if content_search_enabled:
-        args = ["ext:md", f'content:"{pattern}"', "-path", kb_root]
+        # 空格在 Everything 中是 AND 关系，须每个词加 content: 前缀
+        # 正则保留引号短语，如 "反腐 廉政" 作为一个整体 content:"反腐 廉政"
+        tokens = re.findall(r'"[^"]*"|\S+', pattern)
+        content_args = [f"content:{t}" for t in tokens]
+        args = ["ext:md", *content_args, "-path", kb_root]
         text, code = await spawn_run(es_path, args, encoding="gbk")
         if code == 0 and text:
             result = deduplicate(text, exclude_paths)
             if result:
                 return result, "es"
+        # ES 内容搜索已启用但无结果时直接返回，不走 rg 回退
+        return [], "es_no_match"
 
     if total_md_count >= RG_GLOBAL_LIMIT:
         return [], "blocked"
@@ -237,6 +243,31 @@ async def search_content_global(
         return lines, "rg"
 
     return [], "none"
+
+
+async def search_combined_es(
+    es_path: str,
+    kb_root: str,
+    es_text: str,
+    rg_text: str,
+    exclude_paths: list[str],
+) -> tuple[list[str], str]:
+    """Mode C with ES content search enabled: combine filename + content into one ES query.
+    Everything handles both filters in a single index lookup.
+    """
+    try:
+        es_tokens = shlex.split(es_text, posix=False)
+    except ValueError:
+        es_tokens = es_text.split()
+    rg_tokens = re.findall(r'"[^"]*"|\S+', rg_text)
+    content_args = [f"content:{t}" for t in rg_tokens]
+    args = [*es_tokens, *content_args, "ext:md", "-path", kb_root]
+    text, code = await spawn_run(es_path, args, encoding="gbk")
+    if code == 0 and text:
+        result = deduplicate(text, exclude_paths)
+        if result:
+            return result, "es"
+    return [], "es_no_match"
 
 
 async def search_content_in_files_batch(
