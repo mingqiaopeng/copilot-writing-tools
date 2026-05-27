@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 15 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
+  <em>4 个 Agent · 17 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
 </p>
 
 <p align="center">
@@ -107,7 +107,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，15 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，17 个 Skill 启动仅需约 1400-2800 token</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
 <tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
@@ -118,14 +118,14 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>15 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>17 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
 **核心优势：**
 
 <table width="100%">
-<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，15 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，17 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
@@ -220,6 +220,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | 批判家 | 段落顺序问题 | 段落重组 |
 | 批判家 | 段落衔接生硬 | 增加过渡 |
 | 批判家 | 文笔平淡、缺乏亮点 | 神来之笔 / 增加修辞 |
+| 批判家 | 风格与目标刊物不匹配 | 换个风格 |
 | 分析师 | 段落顺序不合理 | 段落重组 |
 | 分析师 | 结构缺失需重建 | 大纲生成 |
 | 分析师 | 段落过长或主题混杂 | 拆分段落 |
@@ -249,6 +250,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **神来之笔** | 神来之笔、好词好句、金句、点睛之笔 | 从修辞句子库搜索匹配金句嵌入或仿写 |
 | **去除标签** | 去除标签、转换成纯文本、去掉格式 | 移除 Markdown 标记，保留纯文本 |
 | **校对勘误** | 按勘误表修改、执行勘误、应用勘误 | 从上下文回溯勘误表，逐条定位替换错字错词 |
+| **换个风格** | 风格、风格转换、改成XX风格 | 按目标刊物风格特征调整文稿语言和结构 |
 
 ### ✅ 确认后修改（先建议，确认后改）
 
@@ -257,6 +259,12 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **标题优化** | 优化标题、改个标题 | 提供 3-5 个备选标题供选择 |
 | **段落重组** | 调整段落顺序、重组段落 | 分析逻辑后提出重组方案 |
 | **大纲生成** | 生成大纲、写个大纲 | 提供 2-3 种结构方案供选择 |
+
+### 📄 输出结果（不修改原文）
+
+| Skill | 触发词 | 功能 |
+|-------|--------|------|
+| **传达提纲** | 传达提纲、提炼提纲、摘编 | 对政论文章结构化提取，输出内部传达提纲 |
 
 ---
 
@@ -314,7 +322,9 @@ copilot-writing-tools/
 │   ├── 神来之笔/                              #   库驱动的金句嵌入
 │   ├── 增加修辞/                              #   修辞手法增强
 │   ├── 去除标签/                              #   去除Markdown标签
-│   └── 校对勘误/                              #   按勘误表逐条修改
+│   ├── 校对勘误/                              #   按勘误表逐条修改
+│   ├── 换个风格/                              #   风格适配：常规→目标刊物
+│   └── 传达提纲/                              #   政论文章结构化摘要提取
 │
 ├── esrg/                                      # 🖥️ 独立 TUI 知识库搜索（Python Textual）
 │   ├── esrg/                                  #   应用包
@@ -323,6 +333,11 @@ copilot-writing-tools/
 ├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
 │   ├── index.js                               #   主程序（es.exe + rg 桥接 + 修辞库搜索）
 │   └── package.json                           #   依赖配置
+│
+├── prompt/                                    # 📋 提示词参考（风格提取/输出规范/任务分解）
+│   ├── 风格提取.md                            #   文章风格分析维度体系
+│   ├── 输出规范.md                            #   文本结构、标题层级与段落组织要求
+│   └── 任务分解.md                            #   复杂任务拆解方法论
 │
 ├── install                                    # 📦 一键安装脚本
 ├── README.md                                  # 📖 项目说明

@@ -448,21 +448,54 @@ class SearchScreen(Screen):
                 files, method = await search_combined_es(
                     es_path, kb_root, es_text, rg_text, exclude
                 )
-                if method == "es_no_match":
+                if method != "es_no_match":
+                    self._populate_results(results, files, pattern=rg_text)
+                    if not files:
+                        status.update("[red]未找到匹配文件，换个关键词试试[/]")
+                    elif len(files) > MAX_DISPLAY:
+                        status.update(
+                            f"[yellow]显示前 {MAX_DISPLAY} 条（共 {len(files)} 条）—— 请缩小范围[/]"
+                        )
+                    else:
+                        status.update(f"[green]找到 {len(files)} 个文件[/]（通过 Everything 内容索引）")
+                    return
+
+                # 联合 ES 查询无结果：降级到两步走（ES 文件名 → rg 内容过滤）
+                # Everything 内容索引可能滞后或不完整，
+                # rg 直接读文件更可靠
+                files = await search_filenames(es_path, kb_root, es_text, exclude)
+                if not files:
+                    self._populate_results(results, [], pattern=rg_text)
+                    status.update("[red]文件名未匹配到文件，换一组关键词试试[/]")
+                    return
+                if len(files) > MODE_C_FILE_LIMIT:
                     self._populate_results(results, [], pattern=rg_text)
                     status.update(
-                        "[yellow]合并搜索无匹配结果，换一组关键词试试[/]"
+                        f"[yellow]文件名命中 {len(files)} 个文件，太多，"
+                        f"请先增加文件名关键词缩小范围[/]"
                     )
                     return
-                self._populate_results(results, files, pattern=rg_text)
-                if not files:
-                    status.update("[red]未找到匹配文件，换个关键词试试[/]")
-                elif len(files) > MAX_DISPLAY:
+                status.update(f"文件名匹配到 {len(files)} 个文件，正在搜索内容...")
+                matches = await search_content_in_files_batch(rg_path, files, rg_text)
+                if not matches:
+                    self._populate_results(results, [], pattern=rg_text)
                     status.update(
-                        f"[yellow]显示前 {MAX_DISPLAY} 条（共 {len(files)} 条）—— 请缩小范围[/]"
+                        f"[red]{len(files)} 个文件中均不包含「{rg_text}」，"
+                        f"换个内容关键词试试[/]"
+                    )
+                    return
+                match_list = list(matches.keys())
+                self._populate_results(results, match_list, matches, pattern=rg_text)
+                if len(match_list) > MAX_DISPLAY:
+                    status.update(
+                        f"[yellow]显示前 {MAX_DISPLAY} 条匹配"
+                        f"（共 {len(files)} 个文件中 {len(matches)} 个命中）—— 请缩小范围[/]"
                     )
                 else:
-                    status.update(f"[green]找到 {len(files)} 个文件[/]（通过 Everything 内容索引）")
+                    status.update(
+                        f"[green]{len(files)} 个文件中 {len(matches)} 个匹配[/]"
+                        "（ES 联合无结果，降级到 ES 文件名 + rg 内容搜索）"
+                    )
                 return
 
             # ES 内容索引未开启：两步走（ES 文件名缩小范围 → rg 内容过滤）
@@ -541,7 +574,7 @@ class SearchScreen(Screen):
             results.mount(ResultItem(fp, match_count=mc, snippet=snippet, pattern=pattern))
         if capped:
             # 延迟到 mount 渲染完成后设置高亮，避免 @work 协程中的时序冲突
-            self.set_timer(0, self._highlight_first_result)
+            self.call_after_refresh(self._highlight_first_result)
 
     def _highlight_first_result(self) -> None:
         """DOM 就绪后将高亮设到第一个结果。"""
