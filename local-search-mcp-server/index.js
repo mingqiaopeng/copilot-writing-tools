@@ -32,6 +32,7 @@ if (existsSync(configPath)) {
     if (userConfig.esPath) config.esPath = userConfig.esPath;
     if (userConfig.everythingPath) config.everythingPath = userConfig.everythingPath;
     if (userConfig.excludePaths) config.excludePaths = userConfig.excludePaths;
+    if (userConfig.rhetoricDbPath) config.rhetoricDbPath = userConfig.rhetoricDbPath;
     if (userConfig.kbRoot) {
       const kb = userConfig.kbRoot;
       config.kbRoot = kb.startsWith("~/") ? resolve(homedir(), kb.slice(2)) : kb;
@@ -42,6 +43,8 @@ if (existsSync(configPath)) {
 }
 
 const { esPath, kbRoot } = config;
+const rhetoricDb = config.rhetoricDbPath || resolve(__dirname, "句子库.jsonl");
+log(`修辞句子库: ${rhetoricDb}`);
 const everythingPath = config.everythingPath || "C:\\Program Files\\Everything\\Everything.exe";
 log(`配置: esPath=${esPath}, kbRoot=${kbRoot}, everythingPath=${everythingPath}, excludePaths=[${(config.excludePaths || []).join(", ")}]  (来源: ${configPath})`);
 
@@ -204,6 +207,33 @@ const server = new McpServer({
   version: "1.0.0",
 });
 
+// ——— 修辞句子库 ———
+// jsonl 格式：每行 {"content": "句子", "tags": ["标签1", "标签2"]}
+// 路径由 config.rhetoricDbPath 指定，默认 __dirname/句子库.jsonl
+
+let rhetoricCache = null;
+
+function loadRhetoricDb() {
+  if (rhetoricCache) return rhetoricCache;
+  const dbPath = config.rhetoricDbPath || resolve(__dirname, "句子库.jsonl");
+  if (!existsSync(dbPath)) {
+    log(`句子库不存在: ${dbPath}`);
+    rhetoricCache = [];
+    return rhetoricCache;
+  }
+  const raw = readFileSync(dbPath, "utf-8");
+  const lines = raw.split(/\r?\n/).filter(Boolean);
+  rhetoricCache = [];
+  for (const line of lines) {
+    try {
+      const obj = JSON.parse(line);
+      if (obj.content) rhetoricCache.push({ text: obj.content, tags: obj.tags });
+    } catch {}
+  }
+  log(`句子库加载: ${rhetoricCache.length} 条`);
+  return rhetoricCache;
+}
+
 // ── 工具 1: 文件名搜索 (es.exe, GBK 输出) ──
 server.tool(
   "search_files",
@@ -286,6 +316,61 @@ server.tool(
 
     log(`rg 完成 exitCode=${exitCode}  text_len=${text.length}`);
     return { content: [{ type: "text", text: text || "(未找到匹配内容)" }] };
+  }
+);
+
+// ── 工具 4: 修辞句子库搜索 (jsonl 内存搜索) ──
+server.tool(
+  "search_rhetoric",
+  "在优秀修辞句子库中搜索匹配的句子，按主题关键词和标签过滤。返回句子原文和标签，由 AI 决定直接使用或仿写。",
+  {
+    query: z.string().min(1).describe("搜索关键词，描述要找的主题内容（如"奋斗 青春"，空格分隔多个词）"),
+    tags: z.string().optional().describe("过滤标签，多个用逗号分隔（如"比喻,排比,对偶"）"),
+    count: z.number().optional().default(5).describe("返回结果数量，默认 5"),
+  },
+  async ({ query, tags, count = 5 }) => {
+    log(`===== search_rhetoric  query="${query}" tags="${tags || ""}" count=${count} =====`);
+    const db = loadRhetoricDb();
+    if (db.length === 0) {
+      return { content: [{ type: "text", text: "(句子库为空，请先准备 句子库.jsonl)" }] };
+    }
+
+    const queryTerms = query.split(/\s+/).filter(Boolean).map(t => t.toLowerCase());
+    const tagFilter = tags ? tags.split(/[,，]\s*/).map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+
+    const scored = [];
+    for (const item of db) {
+      const text = item.text || "";
+      const itemTags = (item.tags || []).map(t => t.toLowerCase());
+
+      // Tag filter: if tag filter specified, at least one tag must match
+      if (tagFilter.length > 0 && !tagFilter.some(t => itemTags.includes(t))) continue;
+
+      // Text match score: how many query terms appear in the text
+      const textLower = text.toLowerCase();
+      const matchCount = queryTerms.filter(t => textLower.includes(t)).length;
+      const textScore = queryTerms.length > 0 ? matchCount / queryTerms.length : 0;
+
+      // Tag bonus: matching tags add 0.2 each
+      const tagBonus = tagFilter.length > 0
+        ? tagFilter.filter(t => itemTags.includes(t)).length / tagFilter.length * 0.3
+        : 0;
+
+      scored.push({ text: item.text, tags: item.tags, score: textScore + tagBonus });
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored.slice(0, Math.min(count, 20));
+
+    if (top.length === 0) {
+      return { content: [{ type: "text", text: "(未找到匹配的句子)" }] };
+    }
+
+    const lines = top.map((s, i) => {
+      return `【${i + 1}】${s.text}\n  标签：${(s.tags || []).join("、")}`;
+    });
+    const footer = `\n\n(共找到 ${scored.length} 条匹配，展示前 ${top.length} 条)`;
+    return { content: [{ type: "text", text: lines.join("\n\n") + footer }] };
   }
 );
 
