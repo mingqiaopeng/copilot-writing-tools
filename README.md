@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 14 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
+  <em>4 个 Agent · 15 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
 </p>
 
 <p align="center">
@@ -107,9 +107,10 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，14 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，15 个 Skill 启动仅需约 1400-2800 token</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
+<tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
 </table>
 
 **Agent↔Skill 分离设计：**
@@ -117,18 +118,18 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>14 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>15 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
 **核心优势：**
 
 <table width="100%">
-<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，14 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，15 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
-<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，14 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，15 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
 <tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
 </table>
 
@@ -218,11 +219,13 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | 批判家 | 输出勘误表 | 校对勘误（一键批量修改） |
 | 批判家 | 段落顺序问题 | 段落重组 |
 | 批判家 | 段落衔接生硬 | 增加过渡 |
+| 批判家 | 文笔平淡、缺乏亮点 | 神来之笔 / 增加修辞 |
 | 分析师 | 段落顺序不合理 | 段落重组 |
 | 分析师 | 结构缺失需重建 | 大纲生成 |
 | 分析师 | 段落过长或主题混杂 | 拆分段落 |
 | 点子王 | 确定写作方向后 | 大纲生成 |
 | 点子王 | 草稿需丰富 | 扩充篇幅 |
+| 点子王 | 草稿需提升文采 | 神来之笔 / 增加修辞 |
 
 ---
 
@@ -242,7 +245,8 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **合并段落** | 合并段落、整合段落 | 合并主题相近的段落 |
 | **拆分段落** | 拆分段落、分段 | 拆分过长或主题混杂的段落 |
 | **简化修辞** | 简化修辞、平实一点 | 简化华丽修辞，更通俗易懂 |
-| **增加修辞** | 增加修辞、更有文采 | 增加比喻、排比等修辞手法 |
+| **增加修辞** | 增加修辞、更有文采 | 克制地增加修辞，优先换动词/对偶/比喻，全文不超过 3 处 |
+| **神来之笔** | 神来之笔、好词好句、金句、点睛之笔 | 从修辞句子库搜索匹配金句嵌入或仿写 |
 | **去除标签** | 去除标签、转换成纯文本、去掉格式 | 移除 Markdown 标记，保留纯文本 |
 | **校对勘误** | 按勘误表修改、执行勘误、应用勘误 | 从上下文回溯勘误表，逐条定位替换错字错词 |
 
@@ -267,7 +271,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 ### 写作中（起草阶段）
 
 ```
-✏️ 扩充篇幅 / 增加修辞 → 🔗 增加过渡 → 📎 合并段落 / ✂️ 拆分段落 → 🔀 调整段落顺序
+✏️ 扩充篇幅 / 神来之笔 → 🎨 增加修辞 / 简化修辞 → 🔗 增加过渡 → 📎 合并段落 / ✂️ 拆分段落 → 🔀 调整段落顺序
 ```
 
 ### 写作后（审核阶段）
@@ -280,7 +284,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 
 ```
 📏 缩减篇幅 / 扩充篇幅
-🎨 简化修辞 / 增加修辞
+🎨 神来之笔（金句嵌入）/ 简化修辞 / 增加修辞
 📄 转换成纯文本（去除标签）
 ```
 
@@ -307,12 +311,17 @@ copilot-writing-tools/
 │   ├── 合并段落/                              #   相关段落合并
 │   ├── 拆分段落/                              #   长段落拆分
 │   ├── 简化修辞/                              #   修辞简化平实化
+│   ├── 神来之笔/                              #   库驱动的金句嵌入
 │   ├── 增加修辞/                              #   修辞手法增强
 │   ├── 去除标签/                              #   去除Markdown标签
 │   └── 校对勘误/                              #   按勘误表逐条修改
 │
+├── esrg/                                      # 🖥️ 独立 TUI 知识库搜索（Python Textual）
+│   ├── esrg/                                  #   应用包
+│   └── pyproject.toml                         #   项目配置
+│
 ├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
-│   ├── index.js                               #   主程序（es.exe + rg 桥接）
+│   ├── index.js                               #   主程序（es.exe + rg 桥接 + 修辞库搜索）
 │   └── package.json                           #   依赖配置
 │
 ├── install                                    # 📦 一键安装脚本
@@ -357,7 +366,16 @@ copilot-writing-tools/
 
 ### MCP 服务器配置
 
-档案员通过自定义 MCP 服务器 `local-search-mcp-server` 执行搜索命令。该服务器随本仓库提供，位于 `local-search-mcp-server/` 目录下。
+档案员通过自定义 MCP 服务器 `local-search-mcp-server` 执行搜索命令。该服务器随本仓库提供，位于 `local-search-mcp-server/` 目录下，提供以下工具：
+
+| MCP 工具 | 用途 |
+|---------|------|
+| `search_files` | 通过 es.exe 搜索文件名 |
+| `search_content_rg` | 通过 ripgrep 搜索文件内容 |
+| `search_content_ps` | 通过 PowerShell Select-String 搜索（rg 不可用时的备选） |
+| `search_rhetoric` | 在修辞句子库中按主题和标签搜索匹配金句（新增，供「神来之笔」Skill 使用） |
+
+修辞句子库为 JSONL 格式文件（`句子库.jsonl`），每行 `{"content": "句子原文", "tags": ["比喻", "排比"]}`。路径通过 `档案员.config.json` 的 `rhetoricDbPath` 指定，不配置时默认在 MCP 服务器目录下寻找。
 
 **1. 安装 MCP 服务器依赖：**
 
@@ -397,7 +415,7 @@ npm install
 
 > 如使用一键安装脚本，MCP 服务器会自动下载到 `~/.copilot/local-search-mcp-server/`，配置会自动合并到 `%APPDATA%\Code\User\mcp.json`（已有配置不丢失，原文件自动备份）。
 
-**4. 配置知识库路径：**
+**4. 配置知识库路径与修辞句子库：**
 
 编辑 `~/.copilot/agents/档案员.config.json`，将 `kbRoot` 设为你的 Markdown 文档库根目录：
 
@@ -406,9 +424,12 @@ npm install
   "esPath": "es.exe",
   "kbRoot": "D:/我的知识库",
   "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
-  "excludePaths": ["ByCatalog", "ByDay", "写易"]
+  "excludePaths": ["ByCatalog", "ByDay", "写易"],
+  "rhetoricDbPath": "F:/文档资料库/好词好句.jsonl"
 }
 ```
+
+> `rhetoricDbPath` 为可选字段，指向包含优秀修辞句子的 JSONL 文件（每行 `{"content": "句子", "tags": ["标签"]}`），供「神来之笔」Skill 和 MCP 的 `search_rhetoric` 工具使用。不配置时默认查找 MCP 服务器目录下的 `句子库.jsonl`。
 
 **5. 重启 VS Code**，在 Agent 选择器中切换到「档案员」即可使用。
 
