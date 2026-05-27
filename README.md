@@ -373,9 +373,8 @@ copilot-writing-tools/
 | `search_files` | 通过 es.exe 搜索文件名 |
 | `search_content_rg` | 通过 ripgrep 搜索文件内容 |
 | `search_content_ps` | 通过 PowerShell Select-String 搜索（rg 不可用时的备选） |
-| `search_rhetoric` | 在修辞句子库中按主题和标签搜索匹配金句（新增，供「神来之笔」Skill 使用） |
+| `search_rhetoric` | 在修辞句子库中按主题和标签搜索匹配金句 |
 
-修辞句子库为 JSONL 格式文件（`句子库.jsonl`），每行 `{"content": "句子原文", "tags": ["比喻", "排比"]}`。路径通过 `档案员.config.json` 的 `rhetoricDbPath` 指定，不配置时默认在 MCP 服务器目录下寻找。
 
 **1. 安装 MCP 服务器依赖：**
 
@@ -422,14 +421,14 @@ npm install
 ```json
 {
   "esPath": "es.exe",
-  "kbRoot": "D:/我的知识库",
+  "kbRoot": "/path/to/your/knowledge-base",
   "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
-  "excludePaths": ["ByCatalog", "ByDay", "写易"],
-  "rhetoricDbPath": "F:/文档资料库/好词好句.jsonl"
+  "excludePaths": ["排除关键字", "关键字2"],
+  "rhetoricDbPath": "C:/path/to/sentences.jsonl"
 }
 ```
 
-> `rhetoricDbPath` 为可选字段，指向包含优秀修辞句子的 JSONL 文件（每行 `{"content": "句子", "tags": ["标签"]}`），供「神来之笔」Skill 和 MCP 的 `search_rhetoric` 工具使用。不配置时默认查找 MCP 服务器目录下的 `句子库.jsonl`。
+> `rhetoricDbPath` 为可选字段，指向包含优秀修辞句子的 JSONL 文件（每行 `{"content": "句子", "tags": ["标签"]}`），供「神来之笔」Skill 和 MCP 的 `search_rhetoric` 工具使用。
 
 **5. 重启 VS Code**，在 Agent 选择器中切换到「档案员」即可使用。
 
