@@ -98,19 +98,22 @@ try {
     Write-Host "  [FAIL] README.md — $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# ── 档案员（可选） ──
+# ── MCP 依赖功能（可选：档案员 Agent + 神来之笔 Skill）──
 Write-Host ""
 Write-Host "============================================" -ForegroundColor DarkYellow
-Write-Host "  [可选] 档案员 Agent — 本地知识库检索" -ForegroundColor DarkYellow
+Write-Host "  [可选] 高级功能 — 档案员 + 神来之笔" -ForegroundColor DarkYellow
 Write-Host "============================================" -ForegroundColor DarkYellow
 Write-Host ""
-Write-Host "档案员需要额外配置 Everything (es.exe)、ripgrep (rg) 和 MCP 服务器" -ForegroundColor Gray
-Write-Host "仅推荐高级用户安装。详见 README 中档案员配置说明。" -ForegroundColor Gray
+Write-Host "档案员（本地知识库检索）和神来之笔（修辞句子库搜索）依赖：" -ForegroundColor Gray
+Write-Host "  - Everything (es.exe) — 文件名极速搜索" -ForegroundColor Gray
+Write-Host "  - ripgrep (rg) — 文件内容搜索" -ForegroundColor Gray
+Write-Host "  - MCP 服务器 — 桥接工具与修辞库" -ForegroundColor Gray
+Write-Host "仅推荐有命令行经验且已搭建本地知识库的用户安装。" -ForegroundColor Gray
 Write-Host ""
 
-$installArchivist = Read-Host "是否安装档案员？(y/n，默认 n)"
-if ($installArchivist -ne 'y' -and $installArchivist -ne 'Y') {
-    Write-Host "  已跳过档案员安装。" -ForegroundColor Gray
+$installAdvanced = Read-Host "是否安装高级功能（档案员 + 神来之笔）？(y/n，默认 n)"
+if ($installAdvanced -ne 'y' -and $installAdvanced -ne 'Y') {
+    Write-Host "  已跳过高级功能安装。" -ForegroundColor Gray
 } else {
     # 下载档案员 Agent 文件
     Write-Host ""
@@ -261,7 +264,7 @@ if ($installArchivist -ne 'y' -and $installArchivist -ne 'Y') {
 }
 
 # ── 收尾 ──
-$agentCount = if ($installArchivist -eq 'y' -or $installArchivist -eq 'Y') { 4 } else { 3 }
+$agentCount = if ($installAdvanced -eq 'y' -or $installAdvanced -eq 'Y') { 4 } else { 3 }
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  安装完成" -ForegroundColor Cyan
@@ -271,8 +274,8 @@ Write-Host "已部署到: $TargetDir"
 Write-Host "  copilot-writing-tools-README.md  说明文档"
 Write-Host "  agents/                          ($agentCount 个 Agent)"
 Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
-if ($installArchivist -eq 'y' -or $installArchivist -eq 'Y') {
-    Write-Host "  local-search-mcp-server/         MCP 服务器"
+if ($installAdvanced -eq 'y' -or $installAdvanced -eq 'Y') {
+    Write-Host "  local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）"
     Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
 }
 Write-Host ""
