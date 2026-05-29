@@ -72,7 +72,21 @@ def find_jsonl_sessions(roots):
 
 
 def read_jsonl_session(session):
-    """读取单个 JSONL 文件的会话数据"""
+    """
+    读取单个 JSONL 文件的会话数据。
+
+    新版 VS Code Copilot Chat JSONL 格式将数据分布在三种 kind 中：
+      - kind=0: 会话元数据，v.requests[] 包含第一轮对话（部分会话有数据）
+      - kind=1: key-value 元数据，k=['requests', N, 'result'] 包含助手的回复文本
+               （在 v.metadata.toolCallRounds[].response 中）
+      - kind=2: k=['requests'] 的条目包含完整的对话轮次（用户消息 + 模型信息）
+                k=['requests', N, 'response'] 的条目包含响应的中间过程
+    """
+    turns = {}          # idx -> {'user', 'assistant', 'model', 'agent'}
+    results = {}        # idx -> assistant text from toolCallRounds
+    custom_title = ''
+    next_turn_idx = 0   # 下一个可用索引
+
     with open(session['path'], 'r', encoding='utf-8') as f:
         for line in f:
             line = line.strip()
@@ -84,42 +98,78 @@ def read_jsonl_session(session):
                 continue
 
             kind = data.get('kind')
+
             if kind == 0:  # 会话元数据
                 v = data.get('v', {})
-                session['title'] = v.get('title', v.get('inputState', {}).get('inputText', ''))
-                # 获取请求列表（对话轮次）
-                for req in v.get('requests', []):
+                if not custom_title:
+                    custom_title = v.get('customTitle', '') or \
+                        v.get('inputState', {}).get('inputText', '') or ''
+                # 从 v.requests[] 提取对话轮次
+                for idx, req in enumerate(v.get('requests', [])):
                     turn = parse_request(req)
                     if turn:
-                        session['requests'].append(turn)
-            elif kind == 1:  # metadata
-                pass
+                        turns[idx] = turn
+                        if idx >= next_turn_idx:
+                            next_turn_idx = idx + 1
+
+            elif kind == 1:  # key-value 元数据
+                k = data.get('k', '')
+                v = data.get('v', '')
+
+                if k == ['customTitle'] and isinstance(v, str) and v:
+                    custom_title = v
+                elif isinstance(k, list) and len(k) == 3 \
+                        and k[0] == 'requests' and k[2] == 'result':
+                    idx = k[1]
+                    if isinstance(v, dict):
+                        metadata = v.get('metadata', {})
+                        if isinstance(metadata, dict):
+                            rounds = metadata.get('toolCallRounds', [])
+                            texts = []
+                            for r in rounds:
+                                resp = r.get('response', '')
+                                if resp and len(resp) > 10:
+                                    texts.append(resp)
+                            if texts:
+                                results[idx] = '\n\n'.join(texts)
+
+            elif kind == 2:  # 对话轮次 / 响应片段
+                k = data.get('k', '')
+                v_arr = data.get('v', [])
+                if k == ['requests'] and isinstance(v_arr, list) and v_arr:
+                    first = v_arr[0]
+                    if isinstance(first, dict) and 'requestId' in first:
+                        msg = first.get('message', {})
+                        user_text = msg.get('text', '') if isinstance(msg, dict) else ''
+                        if user_text:
+                            idx = next_turn_idx
+                            turns[idx] = {
+                                'user': user_text,
+                                'assistant': '',
+                                'model': first.get('modelId', ''),
+                                'agent': first.get('agent', ''),
+                            }
+                            next_turn_idx = idx + 1
+
+    # 合并助手回复文本到对话轮次
+    for idx in sorted(turns.keys()):
+        if idx in results:
+            turns[idx]['assistant'] = results[idx]
+
+    session['title'] = custom_title
+    session['requests'] = [turns[i] for i in sorted(turns.keys())]
 
 
 def parse_request(req):
     """解析一个请求（即一轮对话：用户消息 + 助手回复）"""
     msg = req.get('message', {})
-    user_text = msg.get('text', '')
+    user_text = msg.get('text', '') if isinstance(msg, dict) else ''
     if not user_text:
         return None
 
-    # 提取助手回复中的文本
-    assistant_texts = []
-    for item in req.get('response', []):
-        content = item.get('content', {})
-        kind = item.get('kind', '')
-        if kind == 'text' and 'text' in content:
-            t = content['text']
-            if t and len(t) > 20:  # 忽略太短的片段
-                assistant_texts.append(t)
-        elif kind == 'progressStart':
-            # 跳过 mcpServersStarting / progressStart 等
-            pass
-    # Tool calls / MCP 响应 / 内联编辑 不保存完整的 assistant 文本
-
     return {
         'user': user_text,
-        'assistant': '\n\n'.join(assistant_texts),
+        'assistant': '',
         'model': req.get('modelId', ''),
         'agent': req.get('agent', ''),
     }
@@ -140,6 +190,17 @@ def session_matches(session, keywords):
 def matched_keywords(text, keywords):
     """返回文本中命中的关键词列表"""
     return [kw for kw in keywords if kw.lower() in text.lower()]
+
+
+def _fmt_agent(agent):
+    """将 agent 字段格式化为简短可读的标签"""
+    if not agent:
+        return ''
+    if isinstance(agent, dict):
+        return agent.get('name', agent.get('fullName', ''))
+    if isinstance(agent, str):
+        return agent
+    return str(agent)
 
 
 def export_markdown(sessions, output_dir, all_flag):
@@ -175,10 +236,18 @@ def export_markdown(sessions, output_dir, all_flag):
 
         for turn in session['requests']:
             user_text = turn['user']
+            assistant_text = turn.get('assistant', '')
+            model = turn.get('model', '')
+            agent = turn.get('agent', '')
 
             if all_flag:
                 lines.append(f"## User\n")
                 lines.append(f"{user_text}\n")
+                if model or agent:
+                    agent_label = _fmt_agent(agent)
+                    lines.append(f"> 模型: {model} | 模式: {agent_label}\n")
+                if assistant_text:
+                    lines.append(f"\n**Assistant:**\n\n{assistant_text}\n")
                 lines.append("---\n")
             else:
                 # 过滤模式下只在命中时输出，并标注关键词
@@ -188,6 +257,11 @@ def export_markdown(sessions, output_dir, all_flag):
                 tag = f"[{', '.join(u_kws)}]"
                 lines.append(f"## User {tag}\n")
                 lines.append(f"{user_text}\n")
+                if model or agent:
+                    agent_label = _fmt_agent(agent)
+                    lines.append(f"> 模型: {model} | 模式: {agent_label}\n")
+                if assistant_text:
+                    lines.append(f"\n**Assistant:**\n\n{assistant_text}\n")
                 lines.append("---\n")
 
         content = '\n'.join(lines)
@@ -286,8 +360,10 @@ def main():
         title = s.get('title', '未命名') or '未命名'
         turns = len(s['requests'])
         if turns > 0:
-            # 显示前两句用户输入以帮助识别
-            samples = ' | '.join(t['user'][:40] for t in s['requests'][:2])
+            # 显示前几句用户输入以帮助识别
+            samples = ' → '.join(t['user'][:30] for t in s['requests'][:3])
+            if len(s['requests']) > 3:
+                samples += ' …'
         else:
             samples = '（无对话记录）'
         print(f"  [{i}] {title}")
