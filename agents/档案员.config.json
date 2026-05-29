@@ -1,7 +1,7 @@
 {
   "esPath": "es.exe",
-  "kbRoot": "~/Documents",
-  "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
-  "excludePaths": ["示意目录A", "示意目录B"],
-  "rhetoricDbPath": "C:/path/to/sentences.jsonl"
+  "kbRoot": "F:/文档资料库",
+  "everythingPath": "C:/Program Files/Everything/Everything.exe",
+  "excludePaths": [],
+  "rhetoricDbPath": "F:/文档资料库/好词好句.jsonl"
 }

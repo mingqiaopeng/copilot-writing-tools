@@ -43,7 +43,7 @@ if (existsSync(configPath)) {
 }
 
 const { esPath, kbRoot } = config;
-const rhetoricDb = config.rhetoricDbPath || resolve(__dirname, "句子库.jsonl");
+const rhetoricDb = config.rhetoricDbPath || resolve(__dirname, "好词好句.jsonl");
 log(`修辞句子库: ${rhetoricDb}`);
 const everythingPath = config.everythingPath || "C:\\Program Files\\Everything\\Everything.exe";
 log(`配置: esPath=${esPath}, kbRoot=${kbRoot}, everythingPath=${everythingPath}, excludePaths=[${(config.excludePaths || []).join(", ")}]  (来源: ${configPath})`);
@@ -215,7 +215,7 @@ let rhetoricCache = null;
 
 function loadRhetoricDb() {
   if (rhetoricCache) return rhetoricCache;
-  const dbPath = config.rhetoricDbPath || resolve(__dirname, "句子库.jsonl");
+  const dbPath = config.rhetoricDbPath || resolve(__dirname, "好词好句.jsonl");
   if (!existsSync(dbPath)) {
     log(`句子库不存在: ${dbPath}`);
     rhetoricCache = [];
@@ -332,7 +332,7 @@ server.tool(
     log(`===== search_rhetoric  query="${query}" tags="${tags || ""}" count=${count} =====`);
     const db = loadRhetoricDb();
     if (db.length === 0) {
-      return { content: [{ type: "text", text: "(句子库为空，请先准备 句子库.jsonl)" }] };
+      return { content: [{ type: "text", text: "(句子库为空，请先准备 好词好句.jsonl)" }] };
     }
 
     const queryTerms = query.split(/\s+/).filter(Boolean).map(t => t.toLowerCase());
