@@ -329,9 +329,12 @@ copilot-writing-tools/
 │   ├── 传达提纲/                              #   政论文章结构化摘要提取
 │   └── 优化句式/                              #   消除英式中文与翻译腔
 │
-├── esrg/                                      # 🖥️ 独立 TUI 知识库搜索（Python Textual）
-│   ├── esrg/                                  #   应用包
-│   └── pyproject.toml                         #   项目配置
+├── tools/                                      # 🧰 辅助工具
+│   ├── esrg/                                   # 🖥️ 独立 TUI 知识库搜索（Python Textual）
+│   │   ├── esrg/                               #   应用包
+│   │   └── pyproject.toml                      #   项目配置
+│   └── scripts/                                #   实用脚本
+│       └── extract-copilot-logs.ps1            # 提取 Copilot Chat 历史分析
 │
 ├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
 │   ├── index.js                               #   主程序（es.exe + rg 桥接 + 修辞库搜索）
