@@ -20,9 +20,22 @@
 </p>
 
 > [!NOTE]
-> **前置条件**：安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。Agent 与 Skill 通过语义匹配自动触发。
+> ## 📋 前置条件
+>
+> 安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。Agent 与 Skill 通过语义匹配自动触发。
 >
 > 💡 **推荐配置**：建议将 GitHub Copilot 连接至 **DeepSeek V4** 模型，中文写作体验更佳。建议搭配 <a href="https://ima.qq.com/">腾讯 IMA 知识库</a> Copilot 模式完成文稿生成。
+
+## ⚡ 一行命令安装
+
+```powershell
+irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
+```
+
+打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
+
+> [!TIP]
+> 亦可手动将仓库中的 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下（仅当前项目），或复制到 `~/.copilot/`（全局生效）。
 
 > [!IMPORTANT]
 > ## ⚠️ 本项目不包含"生成"功能
@@ -34,17 +47,6 @@
 > 文稿生成的最低限度，是要综合大量真实、可靠的源素材；更进一步，则需要体现作者自己的思考与思想。而这，至少需要**知识库**的协助——对本地笔记、参考材料、历史文稿的全面检索与整合。这是本工具集当前所不包含、也无意越俎代庖的环节。
 >
 > **建议搭配 <a href="https://ima.qq.com/">腾讯 IMA</a> 使用**，特别是其 **Copilot 模式**。由 IMA 知识库来完成"生成"这一核心任务，与本工具集的构思、分析、润色能力形成完整闭环。
-
-### ⚡ 一行命令安装
-
-```powershell
-irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
-```
-
-打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
-
-> [!TIP]
-> 亦可手动将仓库中的 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下（仅当前项目），或复制到 `~/.copilot/`（全局生效）。
 
 ---
 
