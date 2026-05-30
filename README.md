@@ -35,10 +35,8 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
 
 > [!TIP]
-> **本地安装（推荐离线环境）**：仓库根目录的 `install` 脚本可直接本地运行。将其改名为 `install.ps1`，在 PowerShell 中执行：
-> ```powershell
-> .\install.ps1
-> ```
+> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，自动部署所有 Agent 与 Skill，可选安装档案员+MCP服务器。
+>
 > 亦可手动将 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下（仅当前项目），或复制到 `~/.copilot/`（全局生效）。
 
 > [!IMPORTANT]
