@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     ├── 增加修辞/                    # 增加修辞手法
     ├── 去除标签/                    # 去除Markdown标签
     ├── 校对勘误/                    # 按勘误表逐条修改
-    ├── 换个风格/                    # 风格适配：常规→目标刊物
+    ├── 统一风格/                    # 统一文稿各部分风格
     ├── 传达提纲/                    # 政论文章结构化摘要提取
     └── 优化句式/                    # 消除英式中文与翻译腔
 ```
