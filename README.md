@@ -12,18 +12,28 @@
   <a href="https://code.visualstudio.com/"><img src="https://img.shields.io/badge/Platform-VS_Code-blue" alt="VS Code" /></a>
   <a href="https://github.com/features/copilot"><img src="https://img.shields.io/badge/Runs_on-GitHub_Copilot-24292e" alt="GitHub Copilot" /></a>
   <a href="https://www.deepseek.com/"><img src="https://img.shields.io/badge/推荐模型-DeepSeek_V4-0066cc" alt="DeepSeek V4" /></a>
+  <a href="https://ima.qq.com/"><img src="https://img.shields.io/badge/推荐知识库-腾讯IMA-FF6B35" alt="腾讯IMA 知识库" /></a>
 </p>
 
 <p align="center">
   <img src="assets/Big_4_Agent.png" alt="四大Agent — 点子王 · 批判家 · 分析师 · 档案员" width="800" />
 </p>
 
----
-
 > [!NOTE]
 > **前置条件**：安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。Agent 与 Skill 通过语义匹配自动触发。
 >
-> 💡 **推荐配置**：建议将 GitHub Copilot 连接至 **DeepSeek V4** 模型，中文写作体验更佳。
+> 💡 **推荐配置**：建议将 GitHub Copilot 连接至 **DeepSeek V4** 模型，中文写作体验更佳。建议搭配 <a href="https://ima.qq.com/">腾讯 IMA 知识库</a> Copilot 模式完成文稿生成。
+
+> [!IMPORTANT]
+> ## ⚠️ 本项目不包含"生成"功能
+>
+> **本工具集聚焦于文稿的构思、分析、评判、重构、优化、润色——唯独不包括"从零生成"。**
+>
+> 我们认为，严肃文稿的"从零生成"是一个非常不严肃的命题。没有真实素材支撑、没有作者思考注入的 AI 生成文本，其价值无限趋近于零——做这种从零到零的工作，除了浪费算力之外几乎没有任何意义。
+>
+> 文稿生成的最低限度，是要综合大量真实、可靠的源素材；更进一步，则需要体现作者自己的思考与思想。而这，至少需要**知识库**的协助——对本地笔记、参考材料、历史文稿的全面检索与整合。这是本工具集当前所不包含、也无意越俎代庖的环节。
+>
+> **建议搭配 <a href="https://ima.qq.com/">腾讯 IMA</a> 使用**，特别是其 **Copilot 模式**。由 IMA 知识库来完成"生成"这一核心任务，与本工具集的构思、分析、润色能力形成完整闭环。
 
 ### ⚡ 一行命令安装
 
