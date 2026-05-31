@@ -48,6 +48,13 @@ if exist "README.md" (
     if errorlevel 1 (echo   [FAIL] README.md) else (echo   [OK] copilot-writing-tools-README.md)
 )
 
+REM ── Python 依赖（量化分析 Skill 需要 jieba）──
+echo.
+echo [Python 依赖] jieba — 量化分析 Skill 分词引擎
+echo   正在安装 jieba (pip install jieba)...
+pip install jieba > nul 2>&1
+if errorlevel 1 (echo   [WARN] pip install jieba 失败，请手动安装: pip install jieba) else (echo   [OK] jieba 安装完成)
+
 REM ── 高级功能（可选：档案员 + 神来之笔）──
 echo.
 echo ============================================

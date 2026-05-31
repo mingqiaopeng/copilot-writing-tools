@@ -34,12 +34,12 @@ description: |
 | 主题 | 文章核心议题，一句话 |
 | 摘要 | 百字以内概括全文要点 |
 | 关键字 | ≤6 个，用于语义归类（不同于高频词，是人对文章主题的分类） |
-| 高频词 | ≤6 个，纯统计结果（已排除虚词和单字，由 analyze.py 返回） |
+| 高频词 | ≤6 个，使用 TextRank 算法提取（由 analyze.py 的 textrankKeywords 返回） |
 | 语言风格词 | ≤6 个，从语言风格词库中选取 |
 | 突出优点 | 百字以内 |
 | 显著不足 | 百字以内 |
 
-> **关键字 vs 高频词**：关键字是你对文章主题的语义归类（如"乡村振兴""基层治理"），高频词是统计结果（如"发展""建设""人民"）。两者的交集不是问题。
+> **关键字 vs 高频词**：关键字是你对文章主题的语义归类（如"乡村振兴""基层治理"），高频词是 TextRank 算法提取的统计结果（如"发展""建设""人民"）。两者的交集不是问题。
 
 ### 二、量化评分（1-10 整数）
 
@@ -116,8 +116,12 @@ description: |
 | 7 | 段长标准差 | 剔除标题行后，各段字符数的标准差 |
 | 8 | 完整句长标准差 | 各完整句字符数的标准差，反映句式变化幅度 |
 | 9 | 标点句长标准差 | 各标点句字符数的标准差，同上 |
+| 10 | 词汇多样性 | 不重复词数 ÷ 总词数（type-token ratio），反映词汇丰富度 |
+| 11 | "的"字密度 | 每千字中"的"字出现次数，反映修饰结构的频密程度 |
+| 12 | 正式词比率 | 含正式标记（性/化/度/式/型/主义 等）+ 文言虚词（之/其/所/者/也 等）÷ 总词数 |
+| 13 | 段落相似度 | 段落间 Jaccard 相似度矩阵，仅保留相似度 ≥0.3 的段对，降序排列 |
 
-以上1-9项由 `analyze.py` 脚本自动计算，无需手动统计。
+以上全部由 `analyze.py` 脚本自动计算。另有 `词数`、`TextRank关键词` 等字段一并返回，详见 JSON 结构。
 
 ## 语言风格词库
 
@@ -140,7 +144,12 @@ description: |
    ```
    python "<本skill目录>/analyze.py" "<目标文件路径>"
    ```
-   脚本返回 JSON，包含 totalChars、paragraphCount、各句长均值与标准差、虚词比率、感情标点比率、形副比率、高频词等。
+   脚本返回 JSON，包含 totalChars、wordCount、paragraphCount、各句长均值与标准差、虚词比率、感情标点比率、形副比率、词汇多样性、"的"密度、正式词比率、TextRank关键词、段落相似度矩阵等。
+
+   另有 `--section` 模式（逐段风格特征）供统一风格 Skill 调用：
+   ```
+   python "<本skill目录>/analyze.py" "<目标文件路径>" --section
+   ```
 
 2. **AI 定性判断**：
    - 根据评分量规对 6 个维度逐一打分
@@ -162,6 +171,7 @@ description: |
     "sourceFile": "原文文件名",
     "analyzedAt": "YYYY-MM-DD HH:mm",
     "totalChars": 12345,
+    "wordCount": 6500,
     "totalParagraphs": 12,
     "analyzer": "量化分析 skill"
   },
@@ -170,8 +180,9 @@ description: |
     "author": "作者",
     "topic": "文章主题",
     "abstract": "百字以内摘要",
-    "keywords": ["关键词1", "关键词2"],
-    "topKeywords": ["高频词1", "高频词2"],
+    "keywords": ["语义关键词1", "语义关键词2"],
+    "topKeywords": ["TextRank高频词1", "TextRank高频词2"],
+    "frequencyKeywords": ["词频高频词1", "词频高频词2"],
     "styleWords": ["风格词1", "风格词2"],
     "strengths": "突出优点",
     "weaknesses": "显著不足"
@@ -194,7 +205,16 @@ description: |
     "avgParaLen": 246.8,
     "stdParaLen": 102.4,
     "stdFullSentenceLen": 12.3,
-    "stdPunctSentenceLen": 8.7
+    "stdPunctSentenceLen": 8.7,
+    "lexicalDiversity": 0.7234,
+    "deDensity": 28.5,
+    "formalRatio": 0.0812,
+    "paragraphSimilarity": {
+      "method": "jieba-jaccard",
+      "pairs": [
+        {"i": 3, "j": 5, "score": 0.45}
+      ]
+    }
   }
 }
 ```
@@ -210,7 +230,7 @@ description: |
   标题：……
   作者：……
   主题：……
-  总字数：……  段落数：……
+  总字数：……  词数：……  段落数：……
 
 【摘要】
   ……
@@ -220,16 +240,20 @@ description: |
   艺术性：X   流畅度：X   内容充实度：X
 
 【量化指标】
-  平均完整句长：……   平均标点句长：……
-  虚词比率：……       形副比率：……
-  感情标点比率：……   平均段长：…… (±……)
-  句长波动(σ)：完整…… / 标点……
+  平均完整句长：…… (±……)   平均标点句长：…… (±……)
+  虚词比率：……             形副比率：……
+  感情标点比率：……         平均段长：…… (±……)
+  词汇多样性：……           "的"字密度：…… /千字
+  正式词比率：……
+
+【段落相似度】（仅相似度 ≥0.3 的段对）
+  第 X 段 ↔ 第 Y 段：……
 
 【风格画像】
   ……
 
 【关键词】……
-【高频词】……
+【高频词(TextRank)】……
 
 【优点】……
 【不足】……
@@ -244,4 +268,4 @@ description: |
 - 综合评分不是五项平均，是独立判断
 - 风格词从词库选，不自由发挥
 - 显著不足只描述问题，不写修改建议
-- 若 jieba 未安装导致 adjAdvMethod 为 "jieba-unavailable"，在对话展示中标注"形副比率（jieba 未安装，AI 估算）"并给出估算值
+- 若 jieba 未安装导致 adjAdvMethod 为 "jieba-unavailable"，在对话展示中标注"形副比率（jieba 未安装，AI 估算）"并给出估算值；同理，lexicalDiversity / formalRatio / textrankKeywords 为 null 时标注"jieba 未安装，不可用"

@@ -32,7 +32,8 @@ $Skills = @(
     "校对勘误",
     "统一风格",
     "传达提纲",
-    "优化句式"
+    "优化句式",
+    "量化分析"
 )
 
 Write-Host ""
@@ -97,6 +98,17 @@ try {
     Write-Host "  [OK] copilot-writing-tools-README.md" -ForegroundColor Green
 } catch {
     Write-Host "  [FAIL] README.md — $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# ── Python 依赖（量化分析 Skill 需要 jieba）──
+Write-Host ""
+Write-Host "[Python 依赖] jieba — 量化分析 Skill 分词引擎" -ForegroundColor Yellow
+Write-Host "  正在安装 jieba (pip install jieba)..." -ForegroundColor Gray
+$pipResult = pip install jieba 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  [WARN] pip install jieba 失败，请手动安装: pip install jieba" -ForegroundColor Yellow
+} else {
+    Write-Host "  [OK] jieba 安装完成" -ForegroundColor Green
 }
 
 # ── MCP 依赖功能（可选：档案员 Agent + 神来之笔 Skill）──

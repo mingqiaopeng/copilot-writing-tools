@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""量化分析引擎 — 对中文文本进行定量指标计算，输出 JSON"""
+"""量化分析引擎 — 对中文文本进行定量指标计算，输出 JSON
+
+用法:
+  python analyze.py <filepath>              # 全量分析
+  python analyze.py <filepath> --section    # 分段分析（用于跨章节风格对比）
+"""
 
 import sys
 import json
@@ -8,6 +13,7 @@ import io
 # 确保 Windows 下 stdout 输出 UTF-8
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
 import re
 import os
 from collections import Counter
@@ -52,6 +58,31 @@ STOP_WORDS = {
     "可以", "没有", "已经", "还是", "不是", "就是", "一个", "一种",
     "他们", "我们", "你们", "她们", "它们",
 }
+
+# ============================================================
+# 正式度标记词
+# ============================================================
+FORMAL_SUFFIXES = re.compile(
+    r".*(性|化|度|型|式|主义|观|论|制|体|学|法|权|力|率|额|值)$"
+)
+CLASSICAL_PARTICLES = set("之其所谓者也矣焉乎耳")
+
+
+def _import_jieba():
+    """延迟导入 jieba，方便检测是否可用"""
+    try:
+        import jieba
+        import jieba.posseg as pseg
+        import jieba.analyse
+
+        return jieba, pseg, jieba.analyse
+    except ImportError:
+        return None, None, None
+
+
+# ============================================================
+# 基础工具
+# ============================================================
 
 
 def strip_frontmatter(text):
@@ -103,7 +134,7 @@ def count_emotion_punct(text):
 
 
 def count_sep_punct(text):
-    """统计标点句分隔符总数（。！？，、；：……）"""
+    """统计标点句分隔符总数"""
     return len(re.findall(r"[。！？，、；：……]", text))
 
 
@@ -115,48 +146,169 @@ def stddev(values):
     return sqrt(sum((x - mean) ** 2 for x in values) / len(values))
 
 
-def get_pos_stats(text):
-    """使用 jieba 词性标注，返回形/副统计"""
-    try:
-        import jieba.posseg as pseg
+# ============================================================
+# jieba 依赖的分析函数
+# ============================================================
 
-        words = list(pseg.cut(text))
-        meaningful = [w for w in words if len(w.word.strip()) >= 1]
-        total = len(meaningful)
-        adj_count = len([w for w in meaningful if w.flag in ("a", "ad", "an")])
-        adv_count = len([w for w in meaningful if w.flag == "d"])
-        return {
-            "totalWords": total,
-            "adjCount": adj_count,
-            "advCount": adv_count,
-            "adjAdvRatio": round((adj_count + adv_count) / total, 4) if total > 0 else 0,
-            "method": "jieba-posseg",
-        }
-    except ImportError:
-        return {
-            "totalWords": 0,
-            "adjCount": 0,
-            "advCount": 0,
-            "adjAdvRatio": None,
-            "method": "jieba-unavailable",
-        }
+
+def get_pos_stats(text):
+    """词性标注 → 形/副统计"""
+    _, pseg, _ = _import_jieba()
+    if pseg is None:
+        return {"totalWords": 0, "adjCount": 0, "advCount": 0,
+                "adjAdvRatio": None, "method": "jieba-unavailable"}
+
+    words = list(pseg.cut(text))
+    meaningful = [w for w in words if len(w.word.strip()) >= 1]
+    total = len(meaningful)
+    adj_count = len([w for w in meaningful if w.flag in ("a", "ad", "an")])
+    adv_count = len([w for w in meaningful if w.flag == "d"])
+    return {
+        "totalWords": total,
+        "adjCount": adj_count,
+        "advCount": adv_count,
+        "adjAdvRatio": round((adj_count + adv_count) / total, 4) if total > 0 else 0,
+        "method": "jieba-posseg",
+    }
 
 
 def get_top_keywords(text, n=6):
-    """高频词（使用 jieba 分词，排除停用词和单字）"""
-    try:
-        import jieba
-
-        words = list(jieba.cut(text))
-        filtered = [
-            w.strip()
-            for w in words
-            if len(w.strip()) >= 2 and w.strip() not in STOP_WORDS
-        ]
-        counter = Counter(filtered)
-        return [word for word, _ in counter.most_common(n)]
-    except ImportError:
+    """词频关键词（jieba 分词 + 停用词排除）"""
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
         return []
+    words = list(jieba.cut(text))
+    filtered = [
+        w.strip()
+        for w in words
+        if len(w.strip()) >= 2 and w.strip() not in STOP_WORDS
+    ]
+    counter = Counter(filtered)
+    return [word for word, _ in counter.most_common(n)]
+
+
+def get_textrank_keywords(text, n=6):
+    """TextRank 关键词提取（比词频更准确）"""
+    _, _, analyse = _import_jieba()
+    if analyse is None:
+        return []
+    return analyse.textrank(text, topK=n, withWeight=False)
+
+
+def get_word_count(text):
+    """jieba 分词词数"""
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return 0
+    words = list(jieba.cut(text))
+    return len([w for w in words if len(w.strip()) >= 1])
+
+
+def get_lexical_diversity(text):
+    """词汇多样性 = 不重复词数 / 总词数"""
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return None
+    words = [w.strip() for w in jieba.cut(text) if len(w.strip()) >= 2]
+    if not words:
+        return 0.0
+    return round(len(set(words)) / len(words), 4)
+
+
+def get_de_density(text):
+    """"的"字密度 = 每千字"的"字数"""
+    chars = count_chars(text)
+    if chars == 0:
+        return 0.0
+    de_count = text.count("的")
+    return round(de_count / chars * 1000, 1)
+
+
+def get_formal_ratio(text):
+    """正式词比率 = 含正式标记的词数 / 总词数"""
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return None
+    words = [w.strip() for w in jieba.cut(text) if len(w.strip()) >= 1]
+    if not words:
+        return 0.0
+    formal_count = 0
+    for w in words:
+        if FORMAL_SUFFIXES.match(w):
+            formal_count += 1
+        elif w in CLASSICAL_PARTICLES:
+            formal_count += 1
+    return round(formal_count / len(words), 4)
+
+
+def get_paragraph_similarity(paragraphs):
+    """段落间 Jaccard 相似度矩阵
+
+    返回上三角矩阵 [{i, j, score}, ...]，按 score 降序排列。
+    仅返回 score >= 0.3 的条目（0.3 以下视为不相似）。
+    """
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return {"method": "jieba-unavailable", "pairs": []}
+
+    n = len(paragraphs)
+    if n < 2:
+        return {"method": "jieba-jaccard", "pairs": []}
+
+    # 每段转词集
+    word_sets = []
+    for p in paragraphs:
+        words = {w.strip() for w in jieba.cut(p)
+                 if len(w.strip()) >= 2 and w.strip() not in STOP_WORDS}
+        word_sets.append(words)
+
+    pairs = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = word_sets[i], word_sets[j]
+            if not a or not b:
+                continue
+            intersection = len(a & b)
+            union = len(a | b)
+            score = round(intersection / union, 4) if union > 0 else 0.0
+            if score >= 0.3:
+                pairs.append({"i": i + 1, "j": j + 1, "score": score})
+
+    pairs.sort(key=lambda x: x["score"], reverse=True)
+    return {"method": "jieba-jaccard", "pairs": pairs}
+
+
+def get_section_analysis(paragraphs):
+    """逐段分析 — 用于跨章节风格对比
+
+    为每个段落计算：字符数、词数、虚词比率、正式词比率、平均标点句长
+    """
+    results = []
+    for i, p in enumerate(paragraphs):
+        chars = count_chars(p)
+        results.append({
+            "section": i + 1,
+            "chars": chars,
+            "wordCount": get_word_count(p),
+            "funcWordRatio": round(count_func_words(p) / chars, 4) if chars > 0 else 0,
+            "formalRatio": get_formal_ratio(p),
+            "deDensity": get_de_density(p),
+            "avgPunctSentenceLen": _avg_punct_sent_len(p),
+            "preview": p[:60].replace("\n", " "),
+        })
+    return results
+
+
+def _avg_punct_sent_len(text):
+    PUNCT_SEP = re.compile(r"[。！？，、；：……]")
+    sents = split_sentences(text, PUNCT_SEP)
+    lens = [count_chars(s) for s in sents]
+    return round(sum(lens) / len(lens), 1) if lens else 0
+
+
+# ============================================================
+# 主分析入口
+# ============================================================
 
 
 def analyze(filepath):
@@ -168,6 +320,7 @@ def analyze(filepath):
     paragraphs = get_paragraphs(body)
 
     total_chars = count_chars(body)
+    word_count = get_word_count(body)
 
     # ---- 完整句 ----
     FULL_SEP = re.compile(r"[。！？]")
@@ -194,25 +347,55 @@ def analyze(filepath):
     # ---- 词性 ----
     pos = get_pos_stats(body)
 
-    # ---- 高频词 ----
-    keywords = get_top_keywords(body)
+    # ---- 关键词（词频 + TextRank） ----
+    freq_keywords = get_top_keywords(body)
+    textrank_keywords = get_textrank_keywords(body)
+
+    # ---- 词汇级指标 ----
+    lexical_diversity = get_lexical_diversity(body)
+    de_density = get_de_density(body)
+    formal_ratio = get_formal_ratio(body)
+
+    # ---- 段落相似度 ----
+    para_sim = get_paragraph_similarity(paragraphs)
 
     return {
+        # 基础数据
         "totalChars": total_chars,
+        "wordCount": word_count,
         "paragraphCount": len(paragraphs),
         "fullSentenceCount": len(full_sentences),
         "punctSentenceCount": len(punct_sentences),
+
+        # 句长
         "avgFullSentenceLen": round(sum(full_lens) / len(full_lens), 1) if full_lens else 0,
         "stdFullSentenceLen": round(stddev(full_lens), 1),
         "avgPunctSentenceLen": round(sum(punct_lens) / len(punct_lens), 1) if punct_lens else 0,
         "stdPunctSentenceLen": round(stddev(punct_lens), 1),
+
+        # 段长
         "avgParaLen": round(sum(para_lens) / len(para_lens), 1) if para_lens else 0,
         "stdParaLen": round(stddev(para_lens), 1),
+
+        # 比率
         "funcWordRatio": func_ratio,
         "emotionPunctRatio": emotion_ratio,
         "adjAdvRatio": pos["adjAdvRatio"],
         "adjAdvMethod": pos["method"],
-        "topKeywords": keywords,
+
+        # 词汇级
+        "lexicalDiversity": lexical_diversity,
+        "deDensity": de_density,
+        "formalRatio": formal_ratio,
+
+        # 关键词
+        "freqKeywords": freq_keywords,
+        "textrankKeywords": textrank_keywords,
+
+        # 段落相似度
+        "paragraphSimilarity": para_sim,
+
+        # 词性详情
         "posDetail": {
             "totalWords": pos["totalWords"],
             "adjCount": pos["adjCount"],
@@ -221,25 +404,42 @@ def analyze(filepath):
     }
 
 
+def analyze_sections(filepath):
+    """分段分析模式 — 返回逐段风格特征"""
+    with open(filepath, "r", encoding="utf-8") as f:
+        raw = f.read()
+    body = strip_frontmatter(raw)
+    paragraphs = get_paragraphs(body)
+    return {
+        "paragraphCount": len(paragraphs),
+        "sections": get_section_analysis(paragraphs),
+        "similarity": get_paragraph_similarity(paragraphs),
+    }
+
+
+# ============================================================
+# CLI
+# ============================================================
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(
-            json.dumps(
-                {"error": "Usage: python analyze.py <filepath>"},
-                ensure_ascii=False,
-            )
-        )
+        print(json.dumps(
+            {"error": "Usage: python analyze.py <filepath> [--section]"},
+            ensure_ascii=False,
+        ))
         sys.exit(1)
 
     filepath = sys.argv[1]
     if not os.path.exists(filepath):
-        print(
-            json.dumps(
-                {"error": f"File not found: {filepath}"},
-                ensure_ascii=False,
-            )
-        )
+        print(json.dumps(
+            {"error": f"File not found: {filepath}"},
+            ensure_ascii=False,
+        ))
         sys.exit(1)
 
-    result = analyze(filepath)
+    if "--section" in sys.argv:
+        result = analyze_sections(filepath)
+    else:
+        result = analyze(filepath)
+
     print(json.dumps(result, ensure_ascii=False, indent=2))
