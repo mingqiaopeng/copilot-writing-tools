@@ -221,11 +221,19 @@ def get_top_keywords(text, n=6):
 
 
 def get_textrank_keywords(text, n=6):
-    """TextRank 关键词提取（比词频更准确）"""
+    """TextRank 关键词提取（共现网络中心节点）"""
     _, _, analyse = _import_jieba()
     if analyse is None:
         return []
     return analyse.textrank(text, topK=n, withWeight=False)
+
+
+def get_tfidf_keywords(text, n=6):
+    """TF-IDF 关键词提取（本文高频 × 全局稀有，刻画文章用词辨识度）"""
+    _, _, analyse = _import_jieba()
+    if analyse is None:
+        return []
+    return analyse.extract_tags(text, topK=n, withWeight=False)
 
 
 def get_word_count(text):
@@ -488,6 +496,7 @@ def analyze(filepath):
     # ---- 关键词（词频 + TextRank） ----
     freq_keywords = get_top_keywords(body)
     textrank_keywords = get_textrank_keywords(body)
+    tfidf_keywords = get_tfidf_keywords(body)
 
     # ---- 词汇级指标 ----
     lexical_diversity = get_lexical_diversity(body)
@@ -542,6 +551,7 @@ def analyze(filepath):
         # 关键词
         "freqKeywords": freq_keywords,
         "textrankKeywords": textrank_keywords,
+        "tfidfKeywords": tfidf_keywords,
 
         # 段落相似度
         "paragraphSimilarity": para_sim,

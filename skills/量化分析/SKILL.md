@@ -35,12 +35,13 @@ description: |
 | 摘要 | 百字以内概括全文要点 |
 | 关键字 | ≤6 个，用于语义归类（不同于高频词，是人对文章主题的分类） |
 | 高频词（TextRank） | ≤6 个，TextRank 算法提取（由 analyze.py 的 textrankKeywords 返回） |
-| 高频词（词频） | ≤6 个，纯词频统计（由 analyze.py 的 freqKeywords 返回，与 TextRank 结果有交集属正常） |
+| 高频词（TF-IDF） | ≤6 个，TF-IDF 算法提取（由 analyze.py 的 tfidfKeywords 返回） |
+| 高频词（词频） | ≤6 个，纯词频统计（由 analyze.py 的 freqKeywords 返回，与上述结果有交集属正常） |
 | 语言风格词 | ≤6 个，从语言风格词库中选取 |
 | 突出优点 | 百字以内 |
 | 显著不足 | 百字以内 |
 
-> **关键字 vs 高频词**：关键字是你对文章主题的语义归类（如"乡村振兴""基层治理"），高频词是 TextRank 算法提取的统计结果（如"发展""建设""人民"）。两者的交集不是问题。
+> **三种关键词的区别**：TextRank 回答"文章围绕哪些词展开"（共现网络中心节点）；TF-IDF 回答"哪些词让这篇文章与众不同"（本文高频 × 全局稀有，刻画文章用词辨识度）；词频是纯计数。三者的交集与差异本身即是分析信息。
 
 ### 二、量化评分（1-10 整数）
 
@@ -188,6 +189,7 @@ description: |
     "abstract": "[AI] 百字以内摘要",
     "keywords": ["[AI] 语义关键词 ≤6个"],
     "topKeywords": ["[脚本] textrankKeywords"],
+    "tfidfKeywords": ["[脚本] tfidfKeywords"],
     "frequencyKeywords": ["[脚本] freqKeywords"],
     "styleWords": ["[AI] 风格词 ≤6个，从词库选"],
     "strengths": "[AI] 突出优点，百字以内",
@@ -279,6 +281,7 @@ description: |
 | 摘要 | ……（百字以内） |
 | 关键字 | ……、……、…… |
 | 高频词（TextRank） | ……、……、…… |
+| 高频词（TF-IDF） | ……、……、…… |
 | 高频词（词频） | ……、……、…… |
 | 语言风格词 | ……、……、…… |
 
@@ -338,4 +341,4 @@ description: |
 - 综合评分不是五项平均，是独立判断
 - 风格词从词库选，不自由发挥
 - 显著不足只描述问题，不写修改建议
-- 若 jieba 未安装导致 adjAdvMethod 为 "jieba-unavailable"，在对话展示中标注"形副比率（jieba 未安装，AI 估算）"并给出估算值；同理，lexicalDiversity / formalRatio / textrankKeywords 为 null 时标注"jieba 未安装，不可用"
+- 若 jieba 未安装导致 adjAdvMethod 为 "jieba-unavailable"，在对话展示中标注"形副比率（jieba 未安装，AI 估算）"并给出估算值；同理，lexicalDiversity / formalRatio / textrankKeywords / tfidfKeywords 为 null 时标注"jieba 未安装，不可用"
