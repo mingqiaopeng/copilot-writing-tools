@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 18 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
+  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
 </p>
 
 <p align="center">
@@ -11,6 +11,10 @@
   <a href="https://agentskills.io/specification"><img src="https://img.shields.io/badge/Spec-Agent_Skills-purple" alt="Agent Skills Spec" /></a>
   <a href="https://code.visualstudio.com/"><img src="https://img.shields.io/badge/Platform-VS_Code-blue" alt="VS Code" /></a>
   <a href="https://github.com/features/copilot"><img src="https://img.shields.io/badge/Runs_on-GitHub_Copilot-24292e" alt="GitHub Copilot" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.x-3776AB?logo=python" alt="Python 3.x" /></a>
+</p>
+<p align="center">
+  <a href="https://github.com/fxsjy/jieba"><img src="https://img.shields.io/badge/分词引擎-jieba-2e8b57" alt="jieba 分词" /></a>
   <a href="https://www.deepseek.com/"><img src="https://img.shields.io/badge/推荐模型-DeepSeek_V4-0066cc" alt="DeepSeek V4" /></a>
   <a href="https://ima.qq.com/"><img src="https://img.shields.io/badge/推荐知识库-腾讯IMA-FF6B35" alt="腾讯IMA 知识库" /></a>
 </p>
@@ -22,7 +26,10 @@
 > [!NOTE]
 > ## 📋 前置条件
 >
-> 安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅。Agent 与 Skill 通过语义匹配自动触发。
+> - 安装 [VS Code](https://code.visualstudio.com/) 并启用 [GitHub Copilot](https://github.com/features/copilot) 订阅
+> - [Python 3.x](https://www.python.org/) + [jieba](https://github.com/fxsjy/jieba) 分词库（`pip install jieba`）——量化分析 Skill 依赖
+>
+> Agent 与 Skill 通过语义匹配自动触发。安装脚本已包含 `pip install jieba`，无需手动安装。
 >
 > 💡 **推荐配置**：建议将 GitHub Copilot 连接至 **DeepSeek V4** 模型，中文写作体验更佳。建议搭配 <a href="https://ima.qq.com/">腾讯 IMA 知识库</a> Copilot 模式完成文稿生成。
 
@@ -139,7 +146,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 **核心优势：**
 
 <table width="100%">
-<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，18 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，19 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
@@ -268,6 +275,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **校对勘误** | 按勘误表修改、执行勘误、应用勘误 | 从上下文回溯勘误表，逐条定位替换错字错词 |
 | **优化句式** | 优化句式、英式中文、消除翻译腔 | 诊断英式中文，消除名词化、长定语、"被"字句等 10 类问题 |
 | **统一风格** | 统一风格、风格统一、换个风格、风格转换、改成XX风格 | 统一文稿各部分风格：指定风格改写 / 自动检测统一 / 以指定段落为基准 |
+| **量化分析** | 量化分析、量化评估、量化数据分析、给这篇文章打分 | 多维度量化分析 + AI 评分，输出标准化 JSON 报告（依赖 jieba） |
 
 ### ✅ 确认后修改（先建议，确认后改）
 
@@ -342,13 +350,15 @@ copilot-writing-tools/
 │   ├── 校对勘误/                              #   按勘误表逐条修改
 │   ├── 统一风格/                              #   统一文稿各部分风格
 │   ├── 传达提纲/                              #   政论文章结构化摘要提取
-│   └── 优化句式/                              #   消除英式中文与翻译腔
+│   ├── 优化句式/                              #   消除英式中文与翻译腔
+│   └── 量化分析/                              #   多维度定量分析 + 评分 JSON 报告
 │
 ├── tools/                                      # 🧰 辅助工具
 │   ├── esrg/                                   # 🖥️ 独立 TUI 知识库搜索（Python Textual）
 │   │   ├── esrg/                               #   应用包
 │   │   └── pyproject.toml                      #   项目配置
 │   └── scripts/                                #   实用脚本
+│       ├── analyze.py                          #   中文文本定量分析引擎（jieba）
 │       └── extract-copilot-logs.ps1            # 提取 Copilot Chat 历史分析
 │
 ├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
