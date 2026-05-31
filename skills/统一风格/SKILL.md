@@ -114,7 +114,16 @@ python "<skills目录>/量化分析/analyze.py" "<目标文件路径>" --section
 5. **情感基调**：积极昂扬 / 理性克制 / 中性平实
 6. **叙事视角**：第一人称"我们" / 第三人称 / 混用
 
-> 脚本指标与人工标注的对照关系：`formalRatio` → 正式程度 / 用词风格，`avgPunctSentenceLen` → 句式特征，`deDensity` → 修辞密度（间接参考），`funcWordRatio` → 正式程度（间接参考）。脚本数据是参考基线，最终以人工标注为准。
+> 脚本指标与人工标注的对照关系：
+> - `formalRatio` → 正式程度 / 用词风格
+> - `avgPunctSentenceLen` → 句式特征
+> - `wordLengthDist.double`（双字词占比）→ 正式程度（正式文本双字词占比高，口语文本单字词占比高）
+> - `posDist.noun` / `posDist.verb` → 用词风格（政论文名词密集，散文动词/形容词密集）
+> - `chengyuStats.densityPerK`（每千词四字格数）→ 正式/典雅程度（四字格密度越高，文本越正式典雅）
+> - `deDensity` → 修饰密度（间接参考）
+> - `funcWordRatio` → 正式程度（间接参考）
+>
+> 脚本数据是参考基线，最终以人工标注为准。
 
 **第三步 B：识别主流风格**
 

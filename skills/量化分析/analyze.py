@@ -241,6 +241,108 @@ def get_formal_ratio(text):
     return round(formal_count / len(words), 4)
 
 
+def get_word_length_distribution(text):
+    """词长分布 — 单字词/双字词/三字词/四字及以上 各占比"""
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return None
+    words = [w.strip() for w in jieba.cut(text) if len(w.strip()) >= 1]
+    if not words:
+        return {"single": 0, "double": 0, "triple": 0, "quadPlus": 0, "totalWords": 0}
+    total = len(words)
+    single = len([w for w in words if len(w) == 1])
+    double = len([w for w in words if len(w) == 2])
+    triple = len([w for w in words if len(w) == 3])
+    quad = len([w for w in words if len(w) >= 4])
+    return {
+        "single": round(single / total, 4),
+        "double": round(double / total, 4),
+        "triple": round(triple / total, 4),
+        "quadPlus": round(quad / total, 4),
+        "totalWords": total,
+    }
+
+
+def get_pos_distribution(text):
+    """词性分布全景 — 名词/动词/形容词/副词/虚词(介+连+助)/其他 占比"""
+    _, pseg, _ = _import_jieba()
+    if pseg is None:
+        return None
+    words = list(pseg.cut(text))
+    meaningful = [w for w in words if len(w.word.strip()) >= 1]
+    if not meaningful:
+        return {"noun": 0, "verb": 0, "adj": 0, "adv": 0, "func": 0, "other": 0, "totalWords": 0}
+
+    total = len(meaningful)
+
+    # 名词: n/ng/nr/ns/nt/nz/nrt
+    noun = len([w for w in meaningful if w.flag.startswith("n")])
+    # 动词: v/vd/vn/vg/vi/vx
+    verb = len([w for w in meaningful if w.flag.startswith("v")])
+    # 形容词: a/ad/an/ag
+    adj = len([w for w in meaningful if w.flag.startswith("a")])
+    # 副词: d/dg
+    adv = len([w for w in meaningful if w.flag.startswith("d")])
+    # 虚词: p(介词) + c(连词) + u(助词)
+    func = len([w for w in meaningful if w.flag.startswith(("p", "c", "u"))])
+    other = total - noun - verb - adj - adv - func
+
+    return {
+        "noun": round(noun / total, 4),
+        "verb": round(verb / total, 4),
+        "adj": round(adj / total, 4),
+        "adv": round(adv / total, 4),
+        "func": round(func / total, 4),
+        "other": round(other / total, 4),
+        "totalWords": total,
+    }
+
+
+def get_chengyu_stats(text):
+    """四字格（成语/固定搭配）检测
+
+    策略：jieba 分词后筛选四字词，区分词典收录的（倾向成语）和未收录的（倾向固定搭配）。
+    返回每千词四字格密度、Top N 高频四字格及其出现次数。
+    """
+    jieba, _, _ = _import_jieba()
+    if jieba is None:
+        return None
+
+    words = [w.strip() for w in jieba.cut(text) if len(w.strip()) >= 1]
+    if not words:
+        return {"densityPerK": 0, "totalCount": 0, "topPhrases": [], "totalWords": 0}
+
+    quad_words = [w for w in words if len(w) == 4]
+    # 尝试区分：在 jieba 词典中的四字词通常是成语或固定搭配
+    # jieba 有 get_dict_file() 但不可靠，改用 FREQ 属性检查
+    in_dict = []
+    not_in_dict = []
+    for w in quad_words:
+        # jieba 内部词频表：高频四字词通常是成语/固定搭配
+        freq = jieba.get_FREQ(w)
+        if freq is not None:
+            in_dict.append(w)
+        else:
+            not_in_dict.append(w)
+
+    total_words = len(words)
+    density = round(len(quad_words) / total_words * 1000, 1) if total_words > 0 else 0
+
+    # Top 四字格（按出现频率，合并 in-dict 和 not-in-dict）
+    all_counter = Counter(quad_words)
+    top_all = [{"phrase": w, "count": c, "inDict": w in set(in_dict)}
+               for w, c in all_counter.most_common(10)]
+
+    return {
+        "densityPerK": density,
+        "totalCount": len(quad_words),
+        "inDictCount": len(in_dict),
+        "notInDictCount": len(not_in_dict),
+        "topPhrases": top_all,
+        "totalWords": total_words,
+    }
+
+
 def get_paragraph_similarity(paragraphs):
     """段落间 Jaccard 相似度矩阵
 
@@ -281,7 +383,7 @@ def get_paragraph_similarity(paragraphs):
 def get_section_analysis(paragraphs):
     """逐段分析 — 用于跨章节风格对比
 
-    为每个段落计算：字符数、词数、虚词比率、正式词比率、平均标点句长
+    为每个段落计算完整风格指纹：词长分布、词性分布、四字格密度、正式词比率、句长等
     """
     results = []
     for i, p in enumerate(paragraphs):
@@ -294,6 +396,9 @@ def get_section_analysis(paragraphs):
             "formalRatio": get_formal_ratio(p),
             "deDensity": get_de_density(p),
             "avgPunctSentenceLen": _avg_punct_sent_len(p),
+            "wordLengthDist": get_word_length_distribution(p),
+            "posDist": get_pos_distribution(p),
+            "chengyuStats": get_chengyu_stats(p),
             "preview": p[:60].replace("\n", " "),
         })
     return results
@@ -359,6 +464,11 @@ def analyze(filepath):
     # ---- 段落相似度 ----
     para_sim = get_paragraph_similarity(paragraphs)
 
+    # ---- 风格指纹 ----
+    wl_dist = get_word_length_distribution(body)
+    pos_dist = get_pos_distribution(body)
+    chengyu = get_chengyu_stats(body)
+
     return {
         # 基础数据
         "totalChars": total_chars,
@@ -388,6 +498,11 @@ def analyze(filepath):
         "deDensity": de_density,
         "formalRatio": formal_ratio,
 
+        # 风格指纹
+        "wordLengthDist": wl_dist,
+        "posDist": pos_dist,
+        "chengyuStats": chengyu,
+
         # 关键词
         "freqKeywords": freq_keywords,
         "textrankKeywords": textrank_keywords,
@@ -395,7 +510,7 @@ def analyze(filepath):
         # 段落相似度
         "paragraphSimilarity": para_sim,
 
-        # 词性详情
+        # 词性详情（保留向后兼容）
         "posDetail": {
             "totalWords": pos["totalWords"],
             "adjCount": pos["adjCount"],
