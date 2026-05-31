@@ -139,7 +139,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>18 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>19 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
