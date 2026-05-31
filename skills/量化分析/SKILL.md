@@ -145,13 +145,13 @@ description: |
 
 1. **运行定量脚本**：调用 `analyze.py` 获取全部定量数据
    ```
-   python "<本skill目录>/analyze.py" "<目标文件路径>"
+   python "~/.copilot/tools/scripts/analyze.py" "<目标文件路径>"
    ```
    脚本返回 JSON，包含 totalChars、wordCount、paragraphCount、各句长均值与标准差、虚词比率、感情标点比率、形副比率、词汇多样性、"的"密度、正式词比率、TextRank关键词、段落相似度矩阵等。
 
    另有 `--section` 模式（逐段风格特征）供统一风格 Skill 调用：
    ```
-   python "<本skill目录>/analyze.py" "<目标文件路径>" --section
+   python "~/.copilot/tools/scripts/analyze.py" "<目标文件路径>" --section
    ```
 
 2. **AI 定性判断**：

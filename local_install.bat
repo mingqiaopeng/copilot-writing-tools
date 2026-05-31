@@ -29,6 +29,15 @@ for %%f in ("agents\*.agent.md") do (
     if errorlevel 1 (echo   [FAIL] %%f) else (echo   [OK] %%f)
 )
 
+REM ── 复制工具脚本 ──
+echo.
+echo [Tools]
+if not exist "%TARGET_DIR%\tools\scripts" mkdir "%TARGET_DIR%\tools\scripts"
+if exist "tools\scripts\analyze.py" (
+    copy /y "tools\scripts\analyze.py" "%TARGET_DIR%\tools\scripts\" > nul 2>&1
+    if errorlevel 1 (echo   [FAIL] tools/scripts/analyze.py) else (echo   [OK] tools/scripts/analyze.py)
+)
+
 REM ── 复制 Skills ──
 echo.
 echo [Skills]

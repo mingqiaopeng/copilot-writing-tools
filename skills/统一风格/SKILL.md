@@ -101,7 +101,7 @@ description: |
 
 首先运行量化分析脚本获取逐段定量特征，作为人工标注的参考基线：
 ```
-python "<skills目录>/量化分析/analyze.py" "<目标文件路径>" --section
+python "~/.copilot/tools/scripts/analyze.py" "<目标文件路径>" --section
 ```
 返回每个段落的 `sections` 数组，包含 `formalRatio`（正式词比率）、`avgPunctSentenceLen`（平均句长）、`deDensity`（"的"密度）、`funcWordRatio`（虚词比率）等。若两段的 `formalRatio` 差异超过 0.05 或 `avgPunctSentenceLen` 差异超过 15 字，强烈提示风格不统一。
 

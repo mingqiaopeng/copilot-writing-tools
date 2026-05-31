@@ -209,7 +209,7 @@ description: |
 
 运行量化分析脚本获取句式健康度的定量基线：
 ```
-python "<skills目录>/量化分析/analyze.py" "<目标文件路径>"
+python "~/.copilot/tools/scripts/analyze.py" "<目标文件路径>"
 ```
 关注以下指标：
 - `deDensity` — 每千字"的"字数。≥40 提示"的"字泛滥，≥60 则为严重（对照规则 11 的密度门槛）

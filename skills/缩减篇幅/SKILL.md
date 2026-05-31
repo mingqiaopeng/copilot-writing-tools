@@ -37,7 +37,7 @@ description: |
 ## 执行方式
 
 1. 获取当前字数：
-   - **优先**：若文件已保存，运行 `python "<skills目录>/量化分析/analyze.py" "<文件路径>"` 获取 `totalChars` 和 `wordCount`（jieba 分词词数，比字符数更准确）
+   - **优先**：若文件已保存，运行 `python "~/.copilot/tools/scripts/analyze.py" "<文件路径>"` 获取 `totalChars` 和 `wordCount`（jieba 分词词数，比字符数更准确）
    - **回退**：若文件未保存或 jieba 不可用，直接估算（**严禁逐字计数**）。±20% 误差完全可接受
 2. 根据目标比例和目标字数确定目标字数范围（取整到 50 或 100 字）
 3. 按照以下原则进行精简：

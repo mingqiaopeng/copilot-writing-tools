@@ -71,6 +71,21 @@ foreach ($name in $Agents) {
     }
 }
 
+# ── 下载工具脚本 ──
+Write-Host ""
+Write-Host "[Tools] 量化分析引擎" -ForegroundColor Yellow
+$toolsDir = "$TargetDir\tools\scripts"
+$null = New-Item -ItemType Directory -Force -Path $toolsDir
+$toolUrl = "$BaseUrl/tools/scripts/analyze.py"
+$toolDest = "$toolsDir\analyze.py"
+Write-Host "  $toolUrl" -ForegroundColor Gray
+try {
+    Invoke-WebRequest -Uri $toolUrl -OutFile $toolDest -ErrorAction Stop | Out-Null
+    Write-Host "  [OK] tools/scripts/analyze.py" -ForegroundColor Green
+} catch {
+    Write-Host "  [FAIL] analyze.py — $($_.Exception.Message)" -ForegroundColor Red
+}
+
 # ── 下载 Skills ──
 Write-Host ""
 Write-Host "[Skills] ($($Skills.Count) 个)" -ForegroundColor Yellow
