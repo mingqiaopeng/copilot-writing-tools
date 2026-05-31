@@ -110,28 +110,18 @@ def count_chars(text):
 def get_paragraphs(text):
     """提取段落（剔除标题行和过短行）
 
-    优先按空行（\\n{2,}）切段。若切出段落数 ≤2 但原文换行数 ≥5，
-    说明段落之间无空行（常见于中文文稿），回退为按单换行切段。
+    按换行切段：空行和单换行均为有效段落分隔符（\\n+）。
+    过滤：空行、markdown标题、过短行、纯标点/分隔线。
     """
     cleaned = strip_headings(text).strip()
-
-    # 先试空行切段
-    paras = [p.strip() for p in re.split(r"\n{2,}", cleaned) if p.strip()]
-    paras = [p for p in paras if count_chars(p) > 15]
-
-    # 回退：空行切段太少，但原文有很多换行 → 按单行切
-    line_count = cleaned.count("\n") + 1
-    if len(paras) <= 2 and line_count >= 5:
-        lines = [l.strip() for l in cleaned.split("\n")]
-        # 过滤：空行、markdown标题、过短行（标题）、纯标点/分隔线
-        paras = [
-            l for l in lines
-            if l
-            and count_chars(l) > 15
-            and not re.match(r"^#{1,6}\s", l)
-            and not re.match(r"^[=\-—－\*]{3,}$", l)
-        ]
-
+    lines = [l.strip() for l in re.split(r"\n+", cleaned)]
+    paras = [
+        l for l in lines
+        if l
+        and count_chars(l) > 15
+        and not re.match(r"^#{1,6}\s", l)
+        and not re.match(r"^[=\-—－\*]{3,}$", l)
+    ]
     return paras
 
 
