@@ -2,7 +2,8 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em>
+  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
+	  <em>本项目"蒸馏"了开发者 10 年来从事文稿起草工作的近一千个技巧、经验与知识点（其中 Skill 涵盖 744 个、Agent 涵盖 225 个），并将其有机融合到工作流中。</em>
 </p>
 
 <p align="center">
