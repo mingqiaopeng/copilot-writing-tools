@@ -34,7 +34,8 @@ description: |
 | 主题 | 文章核心议题，一句话 |
 | 摘要 | 百字以内概括全文要点 |
 | 关键字 | ≤6 个，用于语义归类（不同于高频词，是人对文章主题的分类） |
-| 高频词 | ≤6 个，使用 TextRank 算法提取（由 analyze.py 的 textrankKeywords 返回） |
+| 高频词（TextRank） | ≤6 个，TextRank 算法提取（由 analyze.py 的 textrankKeywords 返回） |
+| 高频词（词频） | ≤6 个，纯词频统计（由 analyze.py 的 freqKeywords 返回，与 TextRank 结果有交集属正常） |
 | 语言风格词 | ≤6 个，从语言风格词库中选取 |
 | 突出优点 | 百字以内 |
 | 显著不足 | 百字以内 |
