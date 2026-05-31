@@ -502,6 +502,9 @@ def analyze(filepath):
         "wordLengthDist": wl_dist,
         "posDist": pos_dist,
         "chengyuStats": chengyu,
+        "chengyuDensityPerK": chengyu["densityPerK"] if chengyu else None,
+        "chengyuTotal": chengyu["totalCount"] if chengyu else None,
+        "chengyuTop10": [f"{p['phrase']}({p['count']})" for p in chengyu["topPhrases"]] if chengyu else [],
 
         # 关键词
         "freqKeywords": freq_keywords,

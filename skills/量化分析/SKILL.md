@@ -168,6 +168,8 @@ description: |
 
 ## 输出 JSON 结构
 
+以下为最终 JSON 文件的完整结构。标注 `[脚本]` 的字段直接从 analyze.py 输出中取，不得修改；标注 `[AI]` 的字段由 AI 填入。
+
 ```json
 {
   "meta": {
@@ -179,36 +181,36 @@ description: |
     "analyzer": "量化分析 skill"
   },
   "basicData": {
-    "title": "文章标题",
-    "author": "作者",
-    "topic": "文章主题",
-    "abstract": "百字以内摘要",
-    "keywords": ["语义关键词1", "语义关键词2"],
-    "topKeywords": ["TextRank高频词1", "TextRank高频词2"],
-    "frequencyKeywords": ["词频高频词1", "词频高频词2"],
-    "styleWords": ["风格词1", "风格词2"],
-    "strengths": "突出优点",
-    "weaknesses": "显著不足"
+    "title": "[AI] 文章标题",
+    "author": "[AI] 作者",
+    "topic": "[AI] 文章主题，一句话",
+    "abstract": "[AI] 百字以内摘要",
+    "keywords": ["[AI] 语义关键词 ≤6个"],
+    "topKeywords": ["[脚本] textrankKeywords"],
+    "frequencyKeywords": ["[脚本] freqKeywords"],
+    "styleWords": ["[AI] 风格词 ≤6个，从词库选"],
+    "strengths": "[AI] 突出优点，百字以内",
+    "weaknesses": "[AI] 显著不足，百字以内"
   },
   "scores": {
-    "overall": 6,
-    "thoughtfulness": 6,
-    "logic": 6,
-    "artistry": 6,
-    "fluency": 6,
-    "substance": 6
+    "overall":        { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" },
+    "thoughtfulness": { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" },
+    "logic":          { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" },
+    "artistry":       { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" },
+    "fluency":        { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" },
+    "substance":      { "score": 6, "comment": "[AI] 为什么给这个分数，一句话" }
   },
   "quantitative": {
     "avgFullSentenceLen": 34.5,
+    "stdFullSentenceLen": 12.3,
     "avgPunctSentenceLen": 18.2,
+    "stdPunctSentenceLen": 8.7,
+    "avgParaLen": 246.8,
+    "stdParaLen": 102.4,
     "funcWordRatio": 0.0845,
     "adjAdvRatio": 0.0567,
     "adjAdvMethod": "jieba-posseg",
     "emotionPunctRatio": 0.0234,
-    "avgParaLen": 246.8,
-    "stdParaLen": 102.4,
-    "stdFullSentenceLen": 12.3,
-    "stdPunctSentenceLen": 8.7,
     "lexicalDiversity": 0.7234,
     "deDensity": 28.5,
     "formalRatio": 0.0812,
@@ -218,22 +220,43 @@ description: |
     "posDist": {
       "noun": 0.27, "verb": 0.19, "adj": 0.04, "adv": 0.06, "func": 0.16, "other": 0.28
     },
-    "chengyuStats": {
-      "densityPerK": 46.6,
-      "totalCount": 15,
-      "topPhrases": [
-        {"phrase": "一帆风顺", "count": 1, "inDict": true}
-      ]
-    },
+    "chengyuDensityPerK": 34.0,
+    "chengyuTotal": 73,
+    "chengyuTop10": ["[脚本] 格式: \"词语(次数)\"，按次数降序"],
     "paragraphSimilarity": {
       "method": "jieba-jaccard",
-      "pairs": [
-        {"i": 3, "j": 5, "score": 0.45}
-      ]
+      "pairs": [{"i": 3, "j": 5, "score": 0.45}]
     }
-  }
+  },
+  "quantitativeDisplay": [
+    { "id": 1,  "name": "平均完整句长",   "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 2,  "name": "平均标点句长",   "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 3,  "name": "虚词比率",       "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 4,  "name": "形副比率",       "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 5,  "name": "感情标点比率",   "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 6,  "name": "平均段长",       "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 7,  "name": "词汇多样性",     "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 8,  "name": "\"的\"字密度",    "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 9,  "name": "正式词比率",     "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 10, "name": "四字格密度",     "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 11, "name": "词长分布",       "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 12, "name": "词性分布",       "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" },
+    { "id": 13, "name": "段落相似度",     "value": "[AI] 格式化", "interpretation": "[AI] 结合文体解读" }
+  ]
 }
 ```
+
+### 字段来源规则
+
+- `[脚本]` 字段：直接从 analyze.py 返回的 JSON 中取对应字段值，**不得修改、转换或重新格式化**
+- `[AI]` 字段：由 AI 根据分析结果填入。其中 `quantitativeDisplay[].value` 需将脚本数值格式化为可读字符串（如 `0.0845` → `"8.45%"`、`34.5` → `"34.5字"`）
+- `chengyuTop10`：从脚本 `chengyuStats.topPhrases` 转换，格式为 `"词语(次数)"`，取前 10 条
+
+### 数据一致性约束
+
+- `scores.*.score` 和 `scores.*.comment` 必须与对话展示中「量化评分」表完全一致
+- `quantitativeDisplay[].value` 和 `quantitativeDisplay[].interpretation` 必须与对话展示中「量化指标」表完全一致
+- `basicData.strengths` / `basicData.weaknesses` 必须与对话展示中「突出优点」「显著不足」完全一致
 
 ## 对话展示格式
 
