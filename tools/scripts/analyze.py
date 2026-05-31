@@ -96,10 +96,32 @@ def strip_frontmatter(text):
 
 
 def strip_headings(text):
-    """移除 markdown 标题行"""
-    return "\n".join(
-        l for l in text.split("\n") if not re.match(r"^#{1,6}\s", l.strip())
-    )
+    """移除标题行
+
+    若文本含 # 开头的行（Markdown），用 # 标识符识别标题。
+    否则用「行末无标点 + 字数 ≤22」识别标题。
+    """
+    lines = text.split("\n")
+    has_md_heading = any(re.match(r"^#{1,6}\s", l.strip()) for l in lines)
+
+    if has_md_heading:
+        return "\n".join(
+            l for l in lines if not re.match(r"^#{1,6}\s", l.strip())
+        )
+
+    # 纯文本模式：行末无标点且行字数≤22 → 视为标题
+    punct_end = re.compile(r"[。！？，、；：…….!?,;:]$")
+    result = []
+    for l in lines:
+        stripped = l.strip()
+        if not stripped:
+            result.append(l)
+            continue
+        last_char = stripped[-1]
+        if not punct_end.search(last_char) and count_chars(stripped) <= 22:
+            continue  # 视为标题，跳过
+        result.append(l)
+    return "\n".join(result)
 
 
 def count_chars(text):
