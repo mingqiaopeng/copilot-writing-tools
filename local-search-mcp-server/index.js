@@ -324,8 +324,8 @@ server.tool(
   "search_rhetoric",
   "在优秀修辞句子库中搜索匹配的句子，按主题关键词和标签过滤。返回句子原文和标签，由 AI 决定直接使用或仿写。",
   {
-    query: z.string().min(1).describe("搜索关键词，描述要找的主题内容（如"奋斗 青春"，空格分隔多个词）"),
-    tags: z.string().optional().describe("过滤标签，多个用逗号分隔（如"比喻,排比,对偶"）"),
+    query: z.string().min(1).describe("搜索关键词，描述要找的主题内容（如「奋斗 青春」，空格分隔多个词）"),
+    tags: z.string().optional().describe("过滤标签，多个用逗号分隔（如「比喻,排比,对偶」）"),
     count: z.number().optional().default(5).describe("返回结果数量，默认 5"),
   },
   async ({ query, tags, count = 5 }) => {
