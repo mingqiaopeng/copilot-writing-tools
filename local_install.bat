@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 > nul
 title 中文文稿写作 Agent 工具集 本地安装
 cd /d "%~dp0"
@@ -118,7 +118,7 @@ powershell -ExecutionPolicy Bypass -Command ^
     "$mcp='%APPDATA%\Code\User\mcp.json';" ^
     "$idx='!MCP_DST_DIR!\index.js';" ^
     "$entry=@{command='node';type='stdio';args=@($idx)};" ^
-    "if(test-path $mcp){try{$cfg=gc $mcp -raw -encoding UTF8|ConvertFrom-Json}catch{cp $mcp \"$mcp.bak\" -force;$cfg=@{servers=@{}}};" ^
+    "if(test-path $mcp){try{$cfg=gc $mcp -raw -encoding UTF8|ConvertFrom-Json}catch{cp $mcp \"$mcp.bak\" -force;$cfg=@{servers=@{}}}};" ^
     "if(-not $cfg.servers){$cfg=@{servers=@{}}};" ^
     "$cfg.servers|Add-Member -MemberType NoteProperty -Name 'local-search-mcp-server' -Value $entry -Force;" ^
     "Copy-Item $mcp \"$mcp.bak\" -Force -ErrorAction SilentlyContinue;" ^
@@ -128,9 +128,19 @@ powershell -ExecutionPolicy Bypass -Command ^
 REM ── 复制 .continue/ 适配层（Continue 端）──
 echo.
 echo [Continue] 适配层
-if exist ".continue\config.yaml" (
-    copy /y ".continue\config.yaml" "%CONTINUE_DIR%\" > nul 2>&1
-    echo   [OK] config.yaml
+
+REM config.yaml — 智能合并
+set "_SRC_CFG=%~dp0.continue\config.yaml"
+set "_DST_CFG=%CONTINUE_DIR%\config.yaml"
+if exist "%_SRC_CFG%" (
+    if exist "%_DST_CFG%" (
+        echo   检测到已有 config.yaml，正在合并...
+        python -c "import yaml, os; tc=os.environ['_DST_CFG']; sc=os.environ['_SRC_CFG']; u=yaml.safe_load(open(tc,'r',encoding='utf-8')) or {}; s=yaml.safe_load(open(sc,'r',encoding='utf-8')) or {}; ms=s.get('mcpServers',{}); [u.setdefault('mcpServers',{}).__setitem__(k,v) for k,v in ms.items() if k not in u.get('mcpServers',{})]; sr=s.get('rules',[]); u.setdefault('rules',[]); ex={r.get('source') for r in u['rules'] if isinstance(r,dict)}; [u['rules'].append(r) or ex.add(r.get('source','')) for r in sr if (r.get('source') if isinstance(r,dict) else str(r)) not in ex]; yaml.dump(u, open(tc,'w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
+        if errorlevel 1 (echo   [FAIL] config.yaml 合并失败) else (echo   [OK] config.yaml 已合并)
+    ) else (
+        copy /y "%_SRC_CFG%" "%_DST_CFG%" > nul 2>&1
+        echo   [OK] config.yaml（新建）
+    )
 )
 for %%f in (".continue\prompts\*.prompt") do (
     copy /y "%%f" "%CONTINUE_DIR%\prompts\" > nul 2>&1
@@ -141,12 +151,16 @@ for %%f in (".continue\rules\*.mdc") do (
     if errorlevel 1 (echo   [FAIL] %%~nxf) else (echo   [OK] rules\%%~nxf)
 )
 
-REM ── Python 依赖（量化分析 Skill 需要 jieba）──
+REM ── Python 依赖 ──
 echo.
 echo [Python 依赖] jieba — 量化分析 Skill 分词引擎
 echo   正在安装 jieba (pip install jieba)...
 pip install jieba > nul 2>&1
 if errorlevel 1 (echo   [WARN] pip install jieba 失败，请手动安装: pip install jieba) else (echo   [OK] jieba 安装完成)
+echo [Python 依赖] pyyaml — config.yaml 合并
+echo   正在安装 pyyaml (pip install pyyaml)...
+pip install pyyaml > nul 2>&1
+if errorlevel 1 (echo   [WARN] pip install pyyaml 失败，请手动安装: pip install pyyaml) else (echo   [OK] pyyaml 安装完成)
 
 REM ── 收尾 ──
 echo.

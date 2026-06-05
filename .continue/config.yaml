@@ -1,12 +1,26 @@
-# .continue/config.yaml
-# Continue.dev 适配配置 — 中文文稿写作 Agent 工具集
-# MCP 服务器与 Copilot 端共用 local-search-mcp-server/
+# ═══════════════════════════════════════════════════
+# Continue.dev 配置片段 — 中文文稿写作 Agent 工具集
+# ═══════════════════════════════════════════════════
+#
+# ⚠ 此文件不是完整配置，不能直接覆盖你的 config.yaml！
+#
+# 使用方法：将下方两个区块分别合并到你已有的 config.yaml 中：
+#   1. mcpServers 区块 → 合并到你现有 mcpServers 下
+#   2. rules 区块      → 合并到你现有 rules 下
+#
+# 示例：如果你的 config.yaml 已有 models 和其他 mcpServers，
+# 只需在 mcpServers 下追加 local-search-mcp-server 条目即可。
+# ═══════════════════════════════════════════════════
 
+# ── 1. MCP 服务器 ──────────────────────────────────
+# 追加到你 config.yaml 的 mcpServers 区块下（不要覆盖已有的）
 mcpServers:
   local-search-mcp-server:
     command: node
     args:
       - "${workspaceFolder}/local-search-mcp-server/index.js"
 
+# ── 2. 角色规则 ────────────────────────────────────
+# 追加到你 config.yaml 的 rules 区块下（不要覆盖已有的）
 rules:
   - source: rules/*.mdc
