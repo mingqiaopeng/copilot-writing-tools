@@ -1,0 +1,12 @@
+# .continue/config.yaml
+# Continue.dev 适配配置 — 中文文稿写作 Agent 工具集
+# MCP 服务器与 Copilot 端共用 local-search-mcp-server/
+
+mcpServers:
+  local-search-mcp-server:
+    command: node
+    args:
+      - "${workspaceFolder}/local-search-mcp-server/index.js"
+
+rules:
+  - source: rules/*.mdc
