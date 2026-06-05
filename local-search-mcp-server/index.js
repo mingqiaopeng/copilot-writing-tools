@@ -7,8 +7,6 @@ import iconv from "iconv-lite";
 import { readFileSync, existsSync, appendFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
-import { homedir } from "os";
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LOG_FILE = resolve(__dirname, "debug.log");
 
@@ -19,34 +17,41 @@ function log(msg) {
   try { appendFileSync(LOG_FILE, line); } catch {}
 }
 
-// 读取配置文件：优先 ~/.copilot/agents/（生产），回退 __dirname/../agents/（开发）
-const prodConfig = resolve(homedir(), ".copilot", "agents", "档案员.config.json");
-const devConfig = resolve(__dirname, "..", "agents", "档案员.config.json");
-const configPath = existsSync(prodConfig) ? prodConfig : devConfig;
-let config = { esPath: "es.exe", kbRoot: resolve(homedir(), "Documents"), excludePaths: ["ByCatalog", "ByDay", "写易"] };
+// 读取配置：仅从自身目录读取 config.json，不做任何路径推测
+const configPath = resolve(__dirname, "config.json");
+if (!existsSync(configPath)) {
+  const errMsg = `配置文件不存在：${configPath}\n请复制 config.example.json 为 config.json 并填写本地路径后重试。`;
+  log(errMsg);
+  console.error(errMsg);
+  process.exit(1);
+}
 
-if (existsSync(configPath)) {
-  try {
-    const raw = readFileSync(configPath, "utf-8");
-    const userConfig = JSON.parse(raw);
-    if (userConfig.esPath) config.esPath = userConfig.esPath;
-    if (userConfig.everythingPath) config.everythingPath = userConfig.everythingPath;
-    if (userConfig.excludePaths) config.excludePaths = userConfig.excludePaths;
-    if (userConfig.rhetoricDbPath) config.rhetoricDbPath = userConfig.rhetoricDbPath;
-    if (userConfig.kbRoot) {
-      const kb = userConfig.kbRoot;
-      config.kbRoot = kb.startsWith("~/") ? resolve(homedir(), kb.slice(2)) : kb;
-    }
-  } catch {
-    // 配置文件损坏，使用默认值
+let config;
+try {
+  config = JSON.parse(readFileSync(configPath, "utf-8"));
+} catch (e) {
+  const errMsg = `配置文件解析失败：${configPath}\n${e.message}`;
+  log(errMsg);
+  console.error(errMsg);
+  process.exit(1);
+}
+
+// 验证必需字段
+const requiredKeys = ["esPath", "kbRoot", "rhetoricDbPath"];
+for (const key of requiredKeys) {
+  if (!config[key] || !config[key].toString().trim()) {
+    const errMsg = `配置缺少必需字段 "${key}"，请检查 ${configPath}`;
+    log(errMsg);
+    console.error(errMsg);
+    process.exit(1);
   }
 }
 
 const { esPath, kbRoot } = config;
-const rhetoricDb = config.rhetoricDbPath || resolve(__dirname, "好词好句.jsonl");
+const rhetoricDb = config.rhetoricDbPath;
 log(`修辞句子库: ${rhetoricDb}`);
 const everythingPath = config.everythingPath || "C:\\Program Files\\Everything\\Everything.exe";
-log(`配置: esPath=${esPath}, kbRoot=${kbRoot}, everythingPath=${everythingPath}, excludePaths=[${(config.excludePaths || []).join(", ")}]  (来源: ${configPath})`);
+log(`配置: esPath=${esPath}, kbRoot=${kbRoot}, everythingPath=${everythingPath}, excludePaths=[${(config.excludePaths || []).join(", ")}]`);
 
 // ——— Everything 进程保活 ———
 // es.exe 依赖 Everything 托盘程序（非 Windows Service）提供 IPC 窗口。
@@ -184,7 +189,7 @@ function deduplicate(rawOutput) {
   }
   const lines = rawOutput.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   log(`[去重] 输入 ${lines.length} 行`);
-  const excludePattern = config.excludePaths.length > 0 ? new RegExp(config.excludePaths.map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|")) : null;
+  const excludePattern = (config.excludePaths || []).length > 0 ? new RegExp((config.excludePaths || []).map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|")) : null;
   const filtered = excludePattern ? lines.filter(p => !excludePattern.test(p)) : lines;
   const dropped1 = lines.length - filtered.length;
   if (dropped1 > 0) log(`[去重] 路径排除(${config.excludePaths.join(", ")})过滤掉 ${dropped1} 条`);
@@ -209,13 +214,13 @@ const server = new McpServer({
 
 // ——— 修辞句子库 ———
 // jsonl 格式：每行 {"content": "句子", "tags": ["标签1", "标签2"]}
-// 路径由 config.rhetoricDbPath 指定，默认 __dirname/句子库.jsonl
+// 路径由 config.rhetoricDbPath 指定
 
 let rhetoricCache = null;
 
 function loadRhetoricDb() {
   if (rhetoricCache) return rhetoricCache;
-  const dbPath = config.rhetoricDbPath || resolve(__dirname, "好词好句.jsonl");
+  const dbPath = config.rhetoricDbPath;
   if (!existsSync(dbPath)) {
     log(`句子库不存在: ${dbPath}`);
     rhetoricCache = [];
@@ -332,7 +337,7 @@ server.tool(
     log(`===== search_rhetoric  query="${query}" tags="${tags || ""}" count=${count} =====`);
     const db = loadRhetoricDb();
     if (db.length === 0) {
-      return { content: [{ type: "text", text: "(句子库为空，请先准备 好词好句.jsonl)" }] };
+      return { content: [{ type: "text", text: "(句子库为空，请检查 config.json 中 rhetoricDbPath 指向的文件)" }] };
     }
 
     const queryTerms = query.split(/\s+/).filter(Boolean).map(t => t.toLowerCase());

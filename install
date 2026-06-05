@@ -3,15 +3,18 @@
 #   irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
 # 本地执行:
 #   先改名为 install.ps1，再 .\install.ps1
+# 说明：统一安装脚本，同时部署 Copilot 端（~/.copilot/）和 Continue 端（~/.continue/）
 
 $RepoBranch = "master"
 $BaseUrl    = "https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/$RepoBranch"
-$TargetDir  = "$env:USERPROFILE\.copilot"
+$CopilotDir = "$env:USERPROFILE\.copilot"
+$ContinueDir = "$env:USERPROFILE\.continue"
 
 $Agents = @(
     "点子王.agent.md",
     "批判家.agent.md",
-    "分析师.agent.md"
+    "分析师.agent.md",
+    "档案员.agent.md"
 )
 
 $Skills = @(
@@ -41,27 +44,30 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  中文文稿写作 Agent 工具集 一键安装" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "安装目标: $TargetDir" -ForegroundColor Gray
+Write-Host "Copilot 部署目标: $CopilotDir" -ForegroundColor Gray
+Write-Host "Continue 部署目标: $ContinueDir" -ForegroundColor Gray
 Write-Host "数据来源: $BaseUrl" -ForegroundColor Gray
 Write-Host ""
 
 # ── 创建目录 ──
 Write-Host "[目录]" -ForegroundColor Yellow
 $dirs = @(
-    "$TargetDir\agents",
-    "$TargetDir\skills"
+    "$CopilotDir\agents",
+    "$CopilotDir\skills",
+    "$ContinueDir\prompts",
+    "$ContinueDir\rules"
 )
 foreach ($dir in $dirs) {
     Write-Host "  创建 $dir"
     $null = New-Item -ItemType Directory -Force -Path $dir
 }
 
-# ── 下载 Agents ──
+# ── 下载 Agents（Copilot 端）──
 Write-Host ""
-Write-Host "[Agents] ($($Agents.Count) 个)" -ForegroundColor Yellow
+Write-Host "[Copilot] Agents ($($Agents.Count) 个)" -ForegroundColor Yellow
 foreach ($name in $Agents) {
-    $url  = "$BaseUrl/agents/$name"
-    $dest = "$TargetDir\agents\$name"
+    $url  = "$BaseUrl/.copilot/agents/$name"
+    $dest = "$CopilotDir\agents\$name"
     Write-Host "  $url" -ForegroundColor Gray
     try {
         Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
@@ -74,7 +80,7 @@ foreach ($name in $Agents) {
 # ── 下载工具脚本 ──
 Write-Host ""
 Write-Host "[Tools] 量化分析引擎" -ForegroundColor Yellow
-$toolsDir = "$TargetDir\tools\scripts"
+$toolsDir = "$CopilotDir\tools\scripts"
 $null = New-Item -ItemType Directory -Force -Path $toolsDir
 $toolUrl = "$BaseUrl/tools/scripts/analyze.py"
 $toolDest = "$toolsDir\analyze.py"
@@ -86,14 +92,14 @@ try {
     Write-Host "  [FAIL] analyze.py — $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# ── 下载 Skills ──
+# ── 下载 Skills（Copilot 端）──
 Write-Host ""
-Write-Host "[Skills] ($($Skills.Count) 个)" -ForegroundColor Yellow
+Write-Host "[Copilot] Skills ($($Skills.Count) 个)" -ForegroundColor Yellow
 foreach ($name in $Skills) {
-    $url  = "$BaseUrl/skills/$name/SKILL.md"
-    $dest = "$TargetDir\skills\$name\SKILL.md"
+    $url  = "$BaseUrl/.copilot/skills/$name/SKILL.md"
+    $dest = "$CopilotDir\skills\$name\SKILL.md"
     Write-Host "  $url" -ForegroundColor Gray
-    $null = New-Item -ItemType Directory -Force -Path "$TargetDir\skills\$name"
+    $null = New-Item -ItemType Directory -Force -Path "$CopilotDir\skills\$name"
     try {
         Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
         Write-Host "  [OK] $name/SKILL.md" -ForegroundColor Green
@@ -102,17 +108,150 @@ foreach ($name in $Skills) {
     }
 }
 
-# ── 下载 README ──
+# ── 风格模板（统一风格 Skill 需要）──
 Write-Host ""
-Write-Host "[README]" -ForegroundColor Yellow
-$readmeUrl  = "$BaseUrl/README.md"
-$readmeDest = "$TargetDir\copilot-writing-tools-README.md"
-Write-Host "  $readmeUrl" -ForegroundColor Gray
+Write-Host "[Copilot] 风格模板" -ForegroundColor Yellow
+$styleDir = "$CopilotDir\skills\统一风格"
+$null = New-Item -ItemType Directory -Force -Path $styleDir
+$styleFiles = @("China_Daily_Style.json", "QiuShi_Style.json", "SGCC_Daily_Style.json", "Study_Time_Style.json")
+foreach ($name in $styleFiles) {
+    $url  = "$BaseUrl/.copilot/skills/统一风格/$name"
+    $dest = "$styleDir\$name"
+    Write-Host "  $url" -ForegroundColor Gray
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] $name" -ForegroundColor Green
+    } catch {
+        Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# ── 下载 MCP 服务器 ──
+Write-Host ""
+Write-Host "[MCP 服务器] local-search-mcp-server" -ForegroundColor Yellow
+$mcpDir = "$CopilotDir\local-search-mcp-server"
+$null = New-Item -ItemType Directory -Force -Path $mcpDir
+$mcpFiles = @("index.js", "package.json", "config.example.json")
+foreach ($name in $mcpFiles) {
+    $url  = "$BaseUrl/local-search-mcp-server/$name"
+    $dest = "$mcpDir\$name"
+    Write-Host "  $url" -ForegroundColor Gray
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] $name" -ForegroundColor Green
+    } catch {
+        Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# ── 生成 MCP config.json（不存在时从 example 复制）──
+Write-Host ""
+Write-Host "  检查 MCP 配置..."
+$mcpConfigDest = "$mcpDir\config.json"
+if (Test-Path $mcpConfigDest) {
+    Write-Host "  [OK] config.json 已存在，保持原样" -ForegroundColor Gray
+} else {
+    Copy-Item "$mcpDir\config.example.json" $mcpConfigDest -Force
+    Write-Host "  [OK] config.json 已从模板生成" -ForegroundColor Green
+    Write-Host "  ⚠ 请编辑 $mcpConfigDest 填写本地路径（kbRoot、rhetoricDbPath）" -ForegroundColor Yellow
+}
+
+# ── npm install ──
+Write-Host ""
+Write-Host "  正在安装 MCP 服务器依赖 (npm install)..." -ForegroundColor Gray
+Push-Location $mcpDir
+npm install --production
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  [WARN] npm install 失败，请手动在 $mcpDir 中执行 npm install" -ForegroundColor Yellow
+} else {
+    Write-Host "  [OK] 依赖安装完成" -ForegroundColor Green
+}
+Pop-Location
+
+# ── MCP 配置 — 合并到 VS Code 的 mcp.json（Copilot 端需要）──
+Write-Host ""
+Write-Host "  正在配置 MCP 服务器到 VS Code..." -ForegroundColor Gray
+$vsCodeMcpPath = "$env:APPDATA\Code\User\mcp.json"
+
+$null = New-Item -ItemType Directory -Force -Path (Split-Path $vsCodeMcpPath -Parent)
+
+$existingConfig = $null
+if (Test-Path $vsCodeMcpPath) {
+    try {
+        $existingConfig = Get-Content -Raw -Path $vsCodeMcpPath | ConvertFrom-Json
+        Write-Host "  检测到已有 MCP 配置，将自动合并。" -ForegroundColor Gray
+    } catch {
+        Write-Host "  [WARN] 现有 mcp.json 格式异常，将备份后覆盖。" -ForegroundColor Yellow
+        Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
+        $existingConfig = $null
+    }
+}
+
+$indexPath = "$mcpDir\index.js"
+if ($existingConfig -and $existingConfig.servers) {
+    $existingConfig.servers | Add-Member -MemberType NoteProperty -Name "local-search-mcp-server" -Value @{
+        command = "node"
+        type    = "stdio"
+        args    = @($indexPath)
+    } -Force
+    $mergedConfig = $existingConfig
+} else {
+    $mergedConfig = @{
+        servers = @{
+            "local-search-mcp-server" = @{
+                command = "node"
+                type    = "stdio"
+                args    = @($indexPath)
+            }
+        }
+    }
+}
+
 try {
-    Invoke-WebRequest -Uri $readmeUrl -OutFile $readmeDest -ErrorAction Stop | Out-Null
-    Write-Host "  [OK] copilot-writing-tools-README.md" -ForegroundColor Green
+    if (Test-Path $vsCodeMcpPath) {
+        Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
+    }
+    $mergedConfig | ConvertTo-Json -Depth 4 | Out-File -FilePath $vsCodeMcpPath -Encoding UTF8 -Force
+    Write-Host "  [OK] MCP 配置已写入 $vsCodeMcpPath" -ForegroundColor Green
+    if (Test-Path "$vsCodeMcpPath.bak") {
+        Write-Host "  原配置已备份至 $vsCodeMcpPath.bak" -ForegroundColor Gray
+    }
 } catch {
-    Write-Host "  [FAIL] README.md — $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  [FAIL] 无法写入 MCP 配置文件 — $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  请手动将以下内容添加到 $vsCodeMcpPath ：" -ForegroundColor Yellow
+    $mcpSnippet = @{
+        servers = @{
+            "local-search-mcp-server" = @{
+                command = "node"
+                type    = "stdio"
+                args    = @($indexPath)
+            }
+        }
+    }
+    Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
+}
+
+# ── 下载 .continue/ 适配层（Continue 端）──
+Write-Host ""
+Write-Host "[Continue] 适配层 (.continue/)" -ForegroundColor Yellow
+$continueFiles = @(
+    @{src = "config.yaml"; dest = "config.yaml"},
+    @{src = "prompts/xie-zhongxin-ju.prompt"; dest = "prompts\xie-zhongxin-ju.prompt"},
+    @{src = "prompts/biaoti-youhua.prompt"; dest = "prompts\biaoti-youhua.prompt"},
+    @{src = "prompts/lianghua-fenxi.prompt"; dest = "prompts\lianghua-fenxi.prompt"}
+    # 注：更多 .prompt 和 .mdc 文件将由仓库维护者逐步添加
+)
+foreach ($file in $continueFiles) {
+    $url  = "$BaseUrl/.continue/$($file.src)"
+    $dest = "$ContinueDir\$($file.dest)"
+    $null = New-Item -ItemType Directory -Force -Path (Split-Path $dest -Parent)
+    Write-Host "  $url" -ForegroundColor Gray
+    try {
+        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+        Write-Host "  [OK] $($file.src)" -ForegroundColor Green
+    } catch {
+        Write-Host "  [FAIL] $($file.src) — $($_.Exception.Message)" -ForegroundColor Red
+    }
 }
 
 # ── Python 依赖（量化分析 Skill 需要 jieba）──
@@ -126,186 +265,26 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "  [OK] jieba 安装完成" -ForegroundColor Green
 }
 
-# ── MCP 依赖功能（可选：档案员 Agent + 神来之笔 Skill）──
-Write-Host ""
-Write-Host "============================================" -ForegroundColor DarkYellow
-Write-Host "  [可选] 高级功能 — 档案员 + 神来之笔" -ForegroundColor DarkYellow
-Write-Host "============================================" -ForegroundColor DarkYellow
-Write-Host ""
-Write-Host "档案员（本地知识库检索）和神来之笔（修辞句子库搜索）依赖：" -ForegroundColor Gray
-Write-Host "  - Everything (es.exe) — 文件名极速搜索" -ForegroundColor Gray
-Write-Host "  - ripgrep (rg) — 文件内容搜索" -ForegroundColor Gray
-Write-Host "  - MCP 服务器 — 桥接工具与修辞库" -ForegroundColor Gray
-Write-Host "仅推荐有命令行经验且已搭建本地知识库的用户安装。" -ForegroundColor Gray
-Write-Host ""
-
-$installAdvanced = Read-Host "是否安装高级功能（档案员 + 神来之笔）？(y/n，默认 n)"
-if ($installAdvanced -ne 'y' -and $installAdvanced -ne 'Y') {
-    Write-Host "  已跳过高级功能安装。" -ForegroundColor Gray
-} else {
-    # 下载档案员 Agent 文件
-    Write-Host ""
-    Write-Host "[档案员 Agent]" -ForegroundColor Yellow
-    $archivistFiles = @("档案员.agent.md")
-    foreach ($name in $archivistFiles) {
-        $url  = "$BaseUrl/agents/$name"
-        $dest = "$TargetDir\agents\$name"
-        Write-Host "  $url" -ForegroundColor Gray
-        try {
-            Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
-            Write-Host "  [OK] $name" -ForegroundColor Green
-        } catch {
-            Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
-        }
-    }
-
-    # 档案员配置 — 智能合并，不覆盖用户已有值
-    $configName = "档案员.config.json"
-    $configUrl  = "$BaseUrl/agents/$configName"
-    $configDest = "$TargetDir\agents\$configName"
-    Write-Host "  $configUrl" -ForegroundColor Gray
-    try {
-        $templateJson = Invoke-RestMethod -Uri $configUrl
-        if (Test-Path $configDest) {
-            # 已有配置 → 只补充新增 key，保留用户现有值
-            $localConfig = Get-Content -Raw -Path $configDest | ConvertFrom-Json
-            $merged = $localConfig
-            $added = @()
-            foreach ($prop in $templateJson.PSObject.Properties) {
-                if (-not ($localConfig.PSObject.Properties.Name -contains $prop.Name)) {
-                    $merged | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value
-                    $added += $prop.Name
-                }
-            }
-            if ($added.Count -gt 0) {
-                Copy-Item $configDest "$configDest.bak" -Force
-                $merged | ConvertTo-Json -Depth 4 | Out-File -FilePath $configDest -Encoding UTF8 -Force
-                Write-Host "  [OK] $configName — 补充新字段: $($added -join ', ')，已有配置已备份" -ForegroundColor Green
-            } else {
-                Write-Host "  [OK] $configName — 配置已存在，无新增字段，保持原样" -ForegroundColor Gray
-            }
-        } else {
-            # 首次安装 → 直接写入模板
-            $templateJson | ConvertTo-Json -Depth 4 | Out-File -FilePath $configDest -Encoding UTF8 -Force
-            Write-Host "  [OK] $configName — 首次安装，写入模板（请修改 kbRoot 为实际路径）" -ForegroundColor Green
-        }
-    } catch {
-        Write-Host "  [FAIL] $configName — $($_.Exception.Message)" -ForegroundColor Red
-    }
-
-    # 下载 MCP 服务器文件
-    Write-Host ""
-    Write-Host "[MCP 服务器] local-search-mcp-server" -ForegroundColor Yellow
-    $mcpDir = "$TargetDir\local-search-mcp-server"
-    $null = New-Item -ItemType Directory -Force -Path $mcpDir
-    $mcpFiles = @("index.js", "package.json")
-    foreach ($name in $mcpFiles) {
-        $url  = "$BaseUrl/local-search-mcp-server/$name"
-        $dest = "$mcpDir\$name"
-        Write-Host "  $url" -ForegroundColor Gray
-        try {
-            Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
-            Write-Host "  [OK] $name" -ForegroundColor Green
-        } catch {
-            Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
-        }
-    }
-
-    # npm install
-    Write-Host ""
-    Write-Host "  正在安装 MCP 服务器依赖 (npm install)..." -ForegroundColor Gray
-    Push-Location $mcpDir
-    npm install --production
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "  [WARN] npm install 失败，请手动在 $mcpDir 中执行 npm install" -ForegroundColor Yellow
-    } else {
-        Write-Host "  [OK] 依赖安装完成" -ForegroundColor Green
-    }
-    Pop-Location
-
-    # MCP 配置文件 — 智能合并到 VS Code 的 mcp.json
-    Write-Host ""
-    Write-Host "  正在配置 MCP 服务器..." -ForegroundColor Gray
-    $vsCodeMcpPath = "$env:APPDATA\Code\User\mcp.json"
-    $indexPath = "$mcpDir\index.js"
-
-    # 确保目录存在
-    $null = New-Item -ItemType Directory -Force -Path (Split-Path $vsCodeMcpPath -Parent)
-
-    # 读取已有配置（如存在）
-    $existingConfig = $null
-    if (Test-Path $vsCodeMcpPath) {
-        try {
-            $existingConfig = Get-Content -Raw -Path $vsCodeMcpPath | ConvertFrom-Json
-            Write-Host "  检测到已有 MCP 配置，将自动合并。" -ForegroundColor Gray
-        } catch {
-            Write-Host "  [WARN] 现有 mcp.json 格式异常，将备份后覆盖。" -ForegroundColor Yellow
-            Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
-            $existingConfig = $null
-        }
-    }
-
-    # 构建或合并 servers 节点
-    if ($existingConfig -and $existingConfig.servers) {
-        $existingConfig.servers | Add-Member -MemberType NoteProperty -Name "local-search-mcp-server" -Value @{
-            command = "node"
-            type    = "stdio"
-            args    = @($indexPath)
-        } -Force
-        $mergedConfig = $existingConfig
-    } else {
-        $mergedConfig = @{
-            servers = @{
-                "local-search-mcp-server" = @{
-                    command = "node"
-                    type    = "stdio"
-                    args    = @($indexPath)
-                }
-            }
-        }
-    }
-
-    try {
-        # 备份原文件
-        if (Test-Path $vsCodeMcpPath) {
-            Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
-        }
-        $mergedConfig | ConvertTo-Json -Depth 4 | Out-File -FilePath $vsCodeMcpPath -Encoding UTF8 -Force
-        Write-Host "  [OK] MCP 配置已写入 $vsCodeMcpPath" -ForegroundColor Green
-        if (Test-Path "$vsCodeMcpPath.bak") {
-            Write-Host "  原配置已备份至 $vsCodeMcpPath.bak" -ForegroundColor Gray
-        }
-    } catch {
-        Write-Host "  [FAIL] 无法写入 MCP 配置文件 — $($_.Exception.Message)" -ForegroundColor Red
-        Write-Host "  请手动将以下内容添加到 $vsCodeMcpPath ：" -ForegroundColor Yellow
-        $mcpSnippet = @{
-            servers = @{
-                "local-search-mcp-server" = @{
-                    command = "node"
-                    type    = "stdio"
-                    args    = @($indexPath)
-                }
-            }
-        }
-        Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
-    }
-}
-
 # ── 收尾 ──
-$agentCount = if ($installAdvanced -eq 'y' -or $installAdvanced -eq 'Y') { 4 } else { 3 }
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  安装完成" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "已部署到: $TargetDir"
-Write-Host "  copilot-writing-tools-README.md  说明文档"
-Write-Host "  agents/                          ($agentCount 个 Agent)"
+Write-Host "Copilot 端已部署到: $CopilotDir"
+Write-Host "  agents/                          ($($Agents.Count) 个 Agent)"
 Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
-if ($installAdvanced -eq 'y' -or $installAdvanced -eq 'Y') {
-    Write-Host "  local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）"
-    Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
-}
+Write-Host "  local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）"
+Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
 Write-Host ""
-Write-Host "重启 VS Code 后生效。执行 Developer: Reload Window 亦可。" -ForegroundColor Gray
+Write-Host "Continue 端已部署到: $ContinueDir"
+Write-Host "  config.yaml                      配置"
+Write-Host "  prompts/                         斜杠命令"
+Write-Host "  rules/                           角色规则"
+Write-Host ""
+Write-Host "⚠ 首次安装后请务必编辑 MCP 配置：" -ForegroundColor Yellow
+Write-Host "  编辑 $mcpConfigDest" -ForegroundColor Yellow
+Write-Host "  填写 kbRoot（知识库根路径）和 rhetoricDbPath（好词好句.jsonl 路径）" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "重启 VS Code 或 Continue 后生效。" -ForegroundColor Gray
 Write-Host ""

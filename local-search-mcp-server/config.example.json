@@ -1,0 +1,7 @@
+{
+  "esPath": "es.exe",
+  "kbRoot": "请修改为你的知识库根路径，如 F:/文档资料库",
+  "rhetoricDbPath": "请修改为好词好句.jsonl 的完整路径，如 F:/文档资料库/好词好句.jsonl",
+  "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
+  "excludePaths": []
+}

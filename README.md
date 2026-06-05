@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
+  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动 · 同步支持 Continue.dev</em><br />
 	  <em>本项目"蒸馏"了开发者 10 年来从事文稿起草工作的近一千个技巧、经验与知识点（其中 Skill 涵盖 744 个、Agent 涵盖 225 个），并将其有机融合到工作流中。</em>
 </p>
 
@@ -43,9 +43,9 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
 
 > [!TIP]
-> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，自动部署所有 Agent 与 Skill，可选安装档案员+MCP服务器。
+> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署所有内容至两端。
 >
-> 亦可手动将 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下（仅当前项目），或复制到 `~/.copilot/`（全局生效）。
+> 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 目录复制到 `~/.copilot/`（全局生效），或将 `.continue/` 目录复制到 `~/.continue/`。
 
 > [!IMPORTANT]
 > ## ⚠️ 本项目不包含"生成"功能
@@ -169,8 +169,7 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 
 **手动安装（离线环境适用）：**
 
-- **按项目安装**：将仓库中的 `agents/` 和 `skills/` 目录复制到项目根目录的 `.copilot/` 下，仅对当前项目生效。
-- **全局安装**：复制到 `~/.copilot/` 下，对所有项目生效。
+- **全局安装**：将 `.copilot/agents/` 和 `.copilot/skills/` 复制到 `~/.copilot/`，`.continue/` 复制到 `~/.continue/`。
 
 ### 激活
 
@@ -326,33 +325,44 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 
 ```
 copilot-writing-tools/
-├── agents/                                    # 🤖 自定义 Agent
-│   ├── 点子王.agent.md                        #   创意写作顾问
-│   ├── 批判家.agent.md                        #   严苛文稿审核专家
-│   ├── 分析师.agent.md                        #   文稿结构与逻辑分析专家
-│   ├── 档案员.agent.md                        #   知识库检索专家（高级用户）
-│   └── 档案员.config.json                     #   档案员配置文件
 │
-├── skills/                                    # 🔧 Skill 包
-│   ├── 写中心句/                              #   提炼段落中心句
-│   ├── 摘要生成/                              #   文章摘要生成
-│   ├── 标题优化/                              #   标题创作优化
-│   ├── 段落重组/                              #   段落顺序调整
-│   ├── 大纲生成/                              #   文章大纲规划
-│   ├── 增加过渡/                              #   过渡语句添加
-│   ├── 缩减篇幅/                              #   内容精简
-│   ├── 扩充篇幅/                              #   内容扩充丰富
-│   ├── 合并段落/                              #   相关段落合并
-│   ├── 拆分段落/                              #   长段落拆分
-│   ├── 简化修辞/                              #   修辞简化平实化
-│   ├── 神来之笔/                              #   库驱动的金句嵌入
-│   ├── 增加修辞/                              #   修辞手法增强
-│   ├── 去除标签/                              #   去除Markdown标签
-│   ├── 校对勘误/                              #   按勘误表逐条修改
-│   ├── 统一风格/                              #   统一文稿各部分风格
-│   ├── 传达提纲/                              #   政论文章结构化摘要提取
-│   ├── 优化句式/                              #   消除英式中文与翻译腔
-│   └── 量化分析/                              #   多维度定量分析 + 评分 JSON 报告
+├── .copilot/                                   # 🤖 VS Code Copilot 扫描路径
+│   ├── agents/                                 #   自定义 Agent（4 个）
+│   │   ├── 点子王.agent.md                     #     创意写作顾问
+│   │   ├── 批判家.agent.md                     #     严苛文稿审核专家
+│   │   ├── 分析师.agent.md                     #     文稿结构与逻辑分析专家
+│   │   └── 档案员.agent.md                     #     知识库检索专家
+│   └── skills/                                 # 🔧 Skill 包（19 个）
+│       ├── 写中心句/                           #     提炼段落中心句
+│       ├── 摘要生成/                           #     文章摘要生成
+│       ├── 标题优化/                           #     标题创作优化
+│       ├── 段落重组/                           #     段落顺序调整
+│       ├── 大纲生成/                           #     文章大纲规划
+│       ├── 增加过渡/                           #     过渡语句添加
+│       ├── 缩减篇幅/                           #     内容精简
+│       ├── 扩充篇幅/                           #     内容扩充丰富
+│       ├── 合并段落/                           #     相关段落合并
+│       ├── 拆分段落/                           #     长段落拆分
+│       ├── 简化修辞/                           #     修辞简化平实化
+│       ├── 神来之笔/                           #     库驱动的金句嵌入
+│       ├── 增加修辞/                           #     修辞手法增强
+│       ├── 去除标签/                           #     去除Markdown标签
+│       ├── 校对勘误/                           #     按勘误表逐条修改
+│       ├── 统一风格/                           #     统一文稿各部分风格
+│       ├── 传达提纲/                           #     政论文章结构化摘要提取
+│       ├── 优化句式/                           #     消除英式中文与翻译腔
+│       └── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
+│
+├── .continue/                                  # 🟢 Continue.dev 适配层（新建）
+│   ├── config.yaml                             #   MCP + 规则配置
+│   ├── prompts/                                #   .prompt 斜杠命令文件
+│   └── rules/                                  #   .mdc 角色规则文件
+│
+├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器（两平台共用）
+│   ├── index.js                                #   主程序（路径全由 config.json 提供）
+│   ├── package.json                            #   依赖配置
+│   ├── config.example.json                     #   ⚠ 配置模板，复制为 config.json 并填写
+│   └── config.json                             #   📝 本地路径配置（.gitignore，用户专属）
 │
 ├── tools/                                      # 🧰 辅助工具
 │   ├── esrg/                                   # 🖥️ 独立 TUI 知识库搜索（Python Textual）
@@ -360,20 +370,21 @@ copilot-writing-tools/
 │   │   └── pyproject.toml                      #   项目配置
 │   └── scripts/                                #   实用脚本
 │       ├── analyze.py                          #   中文文本定量分析引擎（jieba）
-│       └── extract-copilot-logs.ps1            # 提取 Copilot Chat 历史分析
+│       └── extract-copilot-logs.ps1            #   提取 Copilot Chat 历史分析
 │
-├── local-search-mcp-server/                   # 🔌 MCP 搜索服务器（档案员依赖）
-│   ├── index.js                               #   主程序（es.exe + rg 桥接 + 修辞库搜索）
-│   └── package.json                           #   依赖配置
+├── assets/                                     # 🖼️ 共享资源
+│   ├── Big_4_Agent.png                         #   四大 Agent 示意图
+│   └── 中文文稿写作Agent工具集.pptx            #   项目演示文稿
 │
-├── prompt/                                    # 📋 提示词参考（风格提取/输出规范/任务分解）
-│   ├── 风格提取.md                            #   文章风格分析维度体系
-│   ├── 输出规范.md                            #   文本结构、标题层级与段落组织要求
-│   └── 任务分解.md                            #   复杂任务拆解方法论
+├── prompt/                                     # 📋 提示词参考
+│   ├── 风格提取.md                             #   文章风格分析维度体系
+│   ├── 输出规范.md                             #   文本结构、标题层级与段落组织要求
+│   └── 任务分解.md                             #   复杂任务拆解方法论
 │
-├── install                                    # 📦 一键安装脚本
-├── README.md                                  # 📖 项目说明
-└── CLAUDE.md                                  # 🤖 Claude Code 配置
+├── install                                     # 📦 一键安装脚本（同时部署 Copilot + Continue）
+├── local_install.bat                           # 📦 本地安装脚本
+├── README.md                                   # 📖 项目说明
+└── CLAUDE.md                                   # 🤖 Claude Code 配置
 ```
 
 ## 📚 参考资源
@@ -382,6 +393,39 @@ copilot-writing-tools/
 - [Agent Skills 规范](https://agentskills.io/specification) — 由 Anthropic 发起的开放标准（2025.12）
 - [VS Code 自定义 Agent 文档](https://code.visualstudio.com/docs/copilot/custom-agents) — 官方使用指南
 - [skills.sh](https://skills.sh) — 社区 Skill 市场
+
+---
+
+## 🟢 Continue.dev 适配
+
+本工具集同时支持 [Continue.dev](https://docs.continue.dev/) 插件。在根目录的 `.continue/` 目录中提供了适配层，将 Copilot 原生的 `SKILL.md` / `.agent.md` 格式翻译为 Continue 的 `.prompt` 斜杠命令和 `.mdc` 规则文件。
+
+### 适配内容
+
+| 组件 | Continue 等效 | 说明 |
+|------|--------------|------|
+| 19 个 Skill | `prompts/*.prompt` 斜杠命令 | 拼音连字符命名，如 `/xie-zhongxin-ju` |
+| 4 个 Agent | `rules/*.mdc` 角色规则 | 按需启用（`alwaysApply: false`） |
+| MCP 服务器 | `config.yaml` 中声明 | 与 Copilot 共用 `local-search-mcp-server/` |
+| 项目指令 | `rules/00-project-guide.mdc` | `alwaysApply: true` 全局生效 |
+
+### 使用方法
+
+```powershell
+# 方式一：一键安装（推荐）
+irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
+
+# 方式二：手动部署
+# 将 .continue/ 目录复制到 ~/.continue/ 即可
+```
+
+启动 Continue 后在输入框输入 `/xie-zhongxin-ju`（写中心句）、`/biaoti-youhua`（标题优化）等斜杠命令即可调用对应 Skill。Agent 规则在 Agent 选择面板中按需启用。
+
+> [!NOTE]
+> **Continue vs Copilot 体验差异**
+> - Copilot 通过语义自动匹配触发（说"帮我改"自动匹配对应 Skill）
+> - Continue 需通过斜杠命令 `/前缀` 精确调用
+> - 功能完全相同，触发方式不同
 
 ---
 
@@ -395,10 +439,12 @@ copilot-writing-tools/
 
 ---
 
-## 📁 档案员配置说明（高级用户）
+## 📁 MCP 服务器配置（档案员 + 神来之笔）
 
 > [!WARNING]
-> **不建议普通用户安装**。档案员 Agent 需要额外的本地工具和 MCP 服务器配置，仅推荐有命令行经验且已搭建本地 Markdown 知识库的用户使用。
+> MCP 服务器为可选高级功能，为档案员和神来之笔提供后端搜索支持。需安装 Everything 和 ripgrep，且已搭建本地 Markdown 知识库。
+>
+> 一键安装脚本目前已包含 MCP 部署，无需额外操作。
 
 ### 前置条件
 
@@ -406,14 +452,16 @@ copilot-writing-tools/
 
 | 工具 | 用途 | 安装方式 |
 |------|------|---------|
-| [Everything](https://www.voidtools.com/) | 文件名极速搜索（内存索引） | `winget install voidtools.Everything` 或从 [voidtools.com](https://www.voidtools.com/) 下载安装。确保 `es.exe` 在系统 PATH 中（es.exe 随 Everything 安装包提供，CLI 用法详见 Everything 主页） |
+| [Everything](https://www.voidtools.com/) | 文件名极速搜索（内存索引） | `winget install voidtools.Everything` 或从 [voidtools.com](https://www.voidtools.com/) 下载安装。确保 `es.exe` 在系统 PATH 中 |
 | [ripgrep](https://github.com/BurntSushi/ripgrep) | 文件内容精确搜索 | `winget install BurntSushi.ripgrep.MSVC` 或 `scoop install rg` |
 
-可选：如未安装 rg，档案员将自动退回到 PowerShell 内置的 `Select-String`。
+可选：如未安装 rg，MCP 服务器将自动退回到 PowerShell 内置的 `Select-String`。
 
-### MCP 服务器配置
+### MCP 服务器架构
 
-档案员通过自定义 MCP 服务器 `local-search-mcp-server` 执行搜索命令。该服务器随本仓库提供，位于 `local-search-mcp-server/` 目录下，提供以下工具：
+MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持——**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**。两平台（Copilot + Continue）共用同一份代码，各自通过配置文件指向该服务器。
+
+**提供的 MCP 工具：**
 
 | MCP 工具 | 用途 |
 |---------|------|
@@ -422,15 +470,70 @@ copilot-writing-tools/
 | `search_content_ps` | 通过 PowerShell Select-String 搜索（rg 不可用时的备选） |
 | `search_rhetoric` | 在修辞句子库中按主题和标签搜索匹配金句 |
 
+### 配置步骤
 
-**1. 安装 MCP 服务器依赖：**
+**1. 安装依赖：**
 
 ```powershell
 cd local-search-mcp-server
 npm install
 ```
 
-**2. 在 VS Code 中启用 MCP：**
+**2. 创建本地配置：**
+
+从模板复制（或将 `config.example.json` 复制为 `config.json`）：
+
+```bash
+cp local-search-mcp-server/config.example.json local-search-mcp-server/config.json
+```
+
+编辑 `config.json`，填写你的本地路径：
+
+```json
+{
+  "esPath": "es.exe",
+  "kbRoot": "F:/文档资料库",
+  "rhetoricDbPath": "F:/文档资料库/好词好句.jsonl",
+  "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
+  "excludePaths": []
+}
+```
+
+> ⚠️ `rhetoricDbPath` 为必需字段，指向包含优秀修辞句子的 JSONL 文件（每行 `{"content": "句子", "tags": ["标签"]}`），供「神来之笔」Skill 和 `search_rhetoric` 工具使用。
+
+**3. VS Code 端注册 MCP（Copilot 用户）：**
+
+编辑 `%APPDATA%\Code\User\mcp.json`：
+
+```json
+{
+  "servers": {
+    "local-search-mcp-server": {
+      "command": "node",
+      "type": "stdio",
+      "args": [
+        "C:\\<项目路径>\\local-search-mcp-server\\index.js"
+      ]
+    }
+  }
+}
+```
+
+> 一键安装脚本会自动完成此配置。
+
+**4. Continue 端注册 MCP（Continue 用户）：**
+
+`.continue/config.yaml` 已内置以下配置，开箱即用：
+
+```yaml
+mcpServers:
+  local-search-mcp-server:
+    command: node
+    args:
+      - "${workspaceFolder}/local-search-mcp-server/index.js"
+```
+
+**5. 启用 VS Code MCP 支持：**
 
 打开 VS Code 设置（`Ctrl+,`），确保以下选项已开启：
 
@@ -441,53 +544,7 @@ npm install
 }
 ```
 
-**3. 注册 MCP 服务器：**
-
-编辑 VS Code 用户级 MCP 配置文件 `%APPDATA%\Code\User\mcp.json`（全局生效）：
-
-```json
-{
-  "servers": {
-    "local-search-mcp-server": {
-      "command": "node",
-      "type": "stdio",
-      "args": [
-        "C:\\Users\\<你的用户名>\\.copilot\\local-search-mcp-server\\index.js"
-      ]
-    }
-  }
-}
-```
-
-> 如使用一键安装脚本，MCP 服务器会自动下载到 `~/.copilot/local-search-mcp-server/`，配置会自动合并到 `%APPDATA%\Code\User\mcp.json`（已有配置不丢失，原文件自动备份）。
-
-**4. 配置知识库路径与修辞句子库：**
-
-编辑 `~/.copilot/agents/档案员.config.json`，将 `kbRoot` 设为你的 Markdown 文档库根目录：
-
-```json
-{
-  "esPath": "es.exe",
-  "kbRoot": "/path/to/your/knowledge-base",
-  "everythingPath": "C:\\Program Files\\Everything\\Everything.exe",
-  "excludePaths": ["排除关键字", "关键字2"],
-  "rhetoricDbPath": "C:/path/to/sentences.jsonl"
-}
-```
-
-> `rhetoricDbPath` 为可选字段，指向包含优秀修辞句子的 JSONL 文件（每行 `{"content": "句子", "tags": ["标签"]}`），供「神来之笔」Skill 和 MCP 的 `search_rhetoric` 工具使用。
-
-**5. 重启 VS Code**，在 Agent 选择器中切换到「档案员」即可使用。
-
-### 一键安装（含档案员）
-
-安装脚本支持可选安装档案员，运行时会询问：
-
-```powershell
-irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
-```
-
-根据提示选择 `y` 安装档案员，脚本将自动下载 Agent 文件、MCP 服务器及依赖，并自动配置 MCP。
+**6. 重启 VS Code / Continue**，在 Agent 选择器中即可使用档案员。
 
 ---
 
