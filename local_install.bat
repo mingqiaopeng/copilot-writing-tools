@@ -130,21 +130,21 @@ REM ── 复制 .continue/ 适配层（Continue 端）──
 echo.
 echo [Continue] 适配层
 
-REM config.yaml — 智能合并
-set "_SRC_CFG=%~dp0.continue\config.yaml"
+REM config.yaml — 智能合并（生成 MCP + rules，保留用户模型设置）
 set "_DST_CFG=%CONTINUE_DIR%\config.yaml"
-if exist "%_SRC_CFG%" (
-    if exist "%_DST_CFG%" (
-        echo   备份现有 config.yaml...
-        powershell -ExecutionPolicy Bypass -Command ^
-            "$f='%_DST_CFG%';$s=(Get-Date -Format 'yyyyMMdd_HHmmss');$b=\"${f}.bak.${s}\";cp $f $b -force;Write-Host '  [BACKUP] 已备份至 ' $b"
-        echo   检测到已有 config.yaml，正在合并...
-        python -c "import yaml, os; tc=os.environ['_DST_CFG']; sc=os.environ['_SRC_CFG']; u=yaml.safe_load(open(tc,'r',encoding='utf-8')) or {}; s=yaml.safe_load(open(sc,'r',encoding='utf-8')) or {}; ms=s.get('mcpServers',{}); [u.setdefault('mcpServers',{}).__setitem__(k,v) for k,v in ms.items() if k not in u.get('mcpServers',{})]; sr=s.get('rules',[]); u.setdefault('rules',[]); ex={r.get('source') for r in u['rules'] if isinstance(r,dict)}; [u['rules'].append(r) or ex.add(r.get('source','')) for r in sr if (r.get('source') if isinstance(r,dict) else str(r)) not in ex]; yaml.dump(u, open(tc,'w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
-        if errorlevel 1 (echo   [FAIL] config.yaml 合并失败) else (echo   [OK] config.yaml 已合并)
-    ) else (
-        copy /y "%_SRC_CFG%" "%_DST_CFG%" > nul 2>&1
-        echo   [OK] config.yaml（新建）
-    )
+set "_MCP_PATH=%TARGET_DIR%\local-search-mcp-server\index.js"
+set "_RULES_PATH=%CONTINUE_DIR%\rules\*.mdc"
+if exist "%_DST_CFG%" (
+    echo   备份现有 config.yaml...
+    powershell -ExecutionPolicy Bypass -Command ^
+        "$f='%_DST_CFG%';$s=(Get-Date -Format 'yyyyMMdd_HHmmss');$b=\"${f}.bak.${s}\";cp $f $b -force;Write-Host '  [BACKUP] 已备份至 ' $b"
+    echo   检测到已有 config.yaml，正在合并...
+    python -c "import yaml, os;cfg_path=os.environ['_DST_CFG'];mcp_path=os.environ['_MCP_PATH'];rules_path=os.environ['_RULES_PATH'];f=open(cfg_path,'r',encoding='utf-8');existing=yaml.safe_load(f) or {};f.close();mcp={'local-search-mcp-server':{'command':'node','args':[mcp_path]}};rules=[{'source':rules_path}];existing.setdefault('mcpServers',{});[existing['mcpServers'].setdefault(k,v) for k,v in mcp.items()];existing.setdefault('rules',[]);ex={r.get('source','') if isinstance(r,dict) else r for r in existing['rules']};[existing['rules'].append(r) for r in rules if r['source'] not in ex];yaml.dump(existing, open(cfg_path,'w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
+    if errorlevel 1 (echo   [FAIL] config.yaml 合并失败) else (echo   [OK] config.yaml 已合并（模型设置已保留）)
+) else (
+    echo   新建 config.yaml...
+    python -c "import yaml;mcp_path=r'%_MCP_PATH%';rules_path=r'%_RULES_PATH%';cfg={'mcpServers':{'local-search-mcp-server':{'command':'node','args':[mcp_path]}},'rules':[{'source':rules_path}]};yaml.dump(cfg, open(r'%_DST_CFG%','w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
+    if errorlevel 1 (echo   [FAIL] config.yaml 新建失败) else (echo   [OK] config.yaml 新建)
 )
 for %%f in (".continue\prompts\*.prompt") do (
     copy /y "%%f" "%CONTINUE_DIR%\prompts\" > nul 2>&1

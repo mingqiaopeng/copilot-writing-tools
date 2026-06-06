@@ -237,16 +237,63 @@ try {
     Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
 }
 
-# ── 下载 .continue/ 适配层（Continue 端）──
+# ── 配置 Continue config.yaml（智能合并，保留用户模型设置）──
 Write-Host ""
-Write-Host "[Continue] 适配层 (.continue/)" -ForegroundColor Yellow
-
-# 备份用户已有的 config.yaml 后再覆盖
+Write-Host "  配置 Continue config.yaml..." -ForegroundColor Gray
 $continueCfg = "$ContinueDir\config.yaml"
 Backup-File -Path $continueCfg
 
+# 用 Python 合并：生成 mcpServers 和 rules，保留用户已有的 models
+$mcpJsPath = "$CopilotDir\local-search-mcp-server\index.js".Replace('\', '\\')
+$rulesPath  = "$ContinueDir\rules\*.mdc".Replace('\', '\\')
+$mergeScript = @"
+import yaml, os
+cfg_path = r'$($continueCfg.Replace('\', '\\'))'
+existing = {}
+if os.path.exists(cfg_path):
+    try:
+        with open(cfg_path, 'r', encoding='utf-8') as f:
+            existing = yaml.safe_load(f) or {}
+    except:
+        existing = {}
+# 生成两个新配置块
+mcp_block = {
+    'local-search-mcp-server': {
+        'command': 'node',
+        'args': [r'$mcpJsPath']
+    }
+}
+rules_block = [{'source': r'$rulesPath'}]
+# 合并 mcpServers（不覆盖已有的）
+if 'mcpServers' not in existing or not existing['mcpServers']:
+    existing['mcpServers'] = {}
+for k, v in mcp_block.items():
+    if k not in existing['mcpServers']:
+        existing['mcpServers'][k] = v
+# 合并 rules（不重复）
+if 'rules' not in existing or not existing['rules']:
+    existing['rules'] = []
+existing_sources = {r.get('source') if isinstance(r, dict) else r for r in existing['rules']}
+for r in rules_block:
+    if r['source'] not in existing_sources:
+        existing['rules'].append(r)
+        existing_sources.add(r['source'])
+with open(cfg_path, 'w', encoding='utf-8') as f:
+    yaml.dump(existing, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+print('merged')
+"@
+$pyResult = python -c $mergeScript 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "  [OK] config.yaml 已合并（模型设置已保留）" -ForegroundColor Green
+} else {
+    Write-Host "  [FAIL] config.yaml 合并失败: $pyResult" -ForegroundColor Red
+    Write-Host "  ⚠ 请手动将 mcpServers 和 rules 添加到 $continueCfg" -ForegroundColor Yellow
+}
+
+# ── 下载 prompts 和 rules（Continue 端）──
+Write-Host ""
+Write-Host "[Continue] prompts + rules" -ForegroundColor Yellow
 $continueFiles = @(
-    @{src = "config.yaml"; dest = "config.yaml"},
     @{src = "prompts/写中心句.prompt"; dest = "prompts\写中心句.prompt"},
     @{src = "prompts/标题优化.prompt"; dest = "prompts\标题优化.prompt"},
     @{src = "prompts/量化分析.prompt"; dest = "prompts\量化分析.prompt"}
