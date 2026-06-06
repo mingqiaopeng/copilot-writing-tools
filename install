@@ -236,9 +236,9 @@ Write-Host ""
 Write-Host "[Continue] 适配层 (.continue/)" -ForegroundColor Yellow
 $continueFiles = @(
     @{src = "config.yaml"; dest = "config.yaml"},
-    @{src = "prompts/xie-zhongxin-ju.prompt"; dest = "prompts\xie-zhongxin-ju.prompt"},
-    @{src = "prompts/biaoti-youhua.prompt"; dest = "prompts\biaoti-youhua.prompt"},
-    @{src = "prompts/lianghua-fenxi.prompt"; dest = "prompts\lianghua-fenxi.prompt"}
+    @{src = "prompts/写中心句.prompt"; dest = "prompts\写中心句.prompt"},
+    @{src = "prompts/标题优化.prompt"; dest = "prompts\标题优化.prompt"},
+    @{src = "prompts/量化分析.prompt"; dest = "prompts\量化分析.prompt"}
     # 注：更多 .prompt 和 .mdc 文件将由仓库维护者逐步添加
 )
 foreach ($file in $continueFiles) {
