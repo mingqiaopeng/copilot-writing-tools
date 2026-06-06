@@ -125,7 +125,3 @@ description: 对文章进行多维度量化分析，输出标准化JSON文件并
 📁 完整 JSON 已保存至：<文件路径>
 ```
 
-{{#if selectedCode}}
-[选中文本]
-{{selectedCode}}
-{{/if}}

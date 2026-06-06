@@ -34,10 +34,6 @@ description: 扩充文章内容，支持目标字数或目标比例。触发词�
 【扩充比例】[约实际扩充比例]
 【Apply 说明】以下是修改块，请点击 Continue 的 Apply 按钮逐一应用
 
-{{#if selectedCode}}
-[选中文本]
-{{selectedCode}}
-{{/if}}
 
 ## 输出规范（铁律）
 - 修改内容必须以 diff 块输出，格式：unified diff 代码块（````diff`），hunk 头 `@@ -a,b +c,d @@`，行首 `+`/`-`标记

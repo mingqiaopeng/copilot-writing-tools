@@ -53,7 +53,3 @@ description: 根据主题或素材生成文章大纲，并插入到文件开头�
 
 【操作说明】请回复"使用方案X"来确认插入，或提出调整意见
 
-{{#if selectedCode}}
-[选中文本]
-{{selectedCode}}
-{{/if}}

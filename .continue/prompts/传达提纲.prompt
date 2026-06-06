@@ -49,7 +49,3 @@ description: 对政论文章或政府工作报告类文本进行结构化摘要�
 
 [结构化提纲内容，Markdown 格式，保留原标题层级和编号体系]
 
-{{#if selectedCode}}
-[选中文本]
-{{selectedCode}}
-{{/if}}

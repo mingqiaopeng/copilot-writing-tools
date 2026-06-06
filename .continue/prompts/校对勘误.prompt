@@ -52,10 +52,6 @@ description: 根据对话上下文中的勘误表，逐条修改错字、错词�
 -致关重要
 +至关重要
 
-{{#if selectedCode}}
-[选中文本]
-{{selectedCode}}
-{{/if}}
 
 ## 输出规范（铁律）
 - 修改内容必须以 diff 块输出，格式：unified diff 代码块（````diff`），hunk 头 `@@ -a,b +c,d @@`，行首 `+`/`-`标记
