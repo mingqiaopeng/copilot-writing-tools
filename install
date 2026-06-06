@@ -237,57 +237,94 @@ try {
     Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
 }
 
-# ── 配置 Continue config.yaml（智能合并，保留用户模型设置）──
+# ── 配置 Continue config.yaml（完整模板生成，保留已有 models）──
 Write-Host ""
 Write-Host "  配置 Continue config.yaml..." -ForegroundColor Gray
 $continueCfg = "$ContinueDir\config.yaml"
+$mcpJsPath  = "$CopilotDir/local-search-mcp-server/index.js"
+$rulesPath  = "$ContinueDir/rules/*.mdc"
+
 Backup-File -Path $continueCfg
 
-# 用 Python 合并：生成 mcpServers 和 rules，保留用户已有的 models
-$mcpJsPath = "$CopilotDir/local-search-mcp-server/index.js"
-$rulesPath  = "$ContinueDir/rules/*.mdc"
-$mergeScript = @"
-import yaml, os
-cfg_path = r'$($continueCfg.Replace('\', '/').Replace('//', '/'))'
-existing = {}
-if os.path.exists(cfg_path):
-    try:
-        with open(cfg_path, 'r', encoding='utf-8') as f:
-            existing = yaml.safe_load(f) or {}
-    except:
-        existing = {}
-# 生成两个新配置块
-mcp_block = {
-    'local-search-mcp-server': {
-        'command': 'node',
-        'args': [r'$mcpJsPath']
+# 读取已有配置中的 models 区块，保留用户模型设置
+$modelsBlock = ""
+if (Test-Path $continueCfg) {
+    $oldRaw = Get-Content -Raw -Path $continueCfg
+    if ($oldRaw -match '(?ms)^models:.*?(?=^[a-z][a-z]|\Z)') {
+        $modelsBlock = $matches[0]
+    }
+    if ($oldRaw -match '(?ms)^tabAutocompleteModel:.*?(?=^[a-z][a-z]|\Z)') {
+        $modelsBlock += "`n" + $matches[0]
+    }
+    if ($oldRaw -match '(?ms)^embeddingsProvider:.*?(?=^[a-z][a-z]|\Z)') {
+        $modelsBlock += "`n" + $matches[0]
     }
 }
-rules_block = [{'source': r'$rulesPath'}]
-# 合并 mcpServers（不覆盖已有的）
-if 'mcpServers' not in existing or not existing['mcpServers']:
-    existing['mcpServers'] = {}
-for k, v in mcp_block.items():
-    if k not in existing['mcpServers']:
-        existing['mcpServers'][k] = v
-# 合并 rules（不重复）
-if 'rules' not in existing or not existing['rules']:
-    existing['rules'] = []
-existing_sources = {r.get('source') if isinstance(r, dict) else r for r in existing['rules']}
-for r in rules_block:
-    if r['source'] not in existing_sources:
-        existing['rules'].append(r)
-        existing_sources.add(r['source'])
-with open(cfg_path, 'w', encoding='utf-8') as f:
-    yaml.dump(existing, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
-print('merged')
+
+# 生成完整配置
+if ($modelsBlock) {
+    $fullConfig = @"
+$modelsBlock
+
+mcpServers:
+  local-search-mcp-server:
+    command: node
+    args:
+      - $mcpJsPath
+
+rules:
+  - source: $rulesPath
+
+allowAnonymousTelemetry: false
 "@
-$pyResult = python -c $mergeScript 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "  [OK] config.yaml 已合并（模型设置已保留）" -ForegroundColor Green
 } else {
-    Write-Host "  [FAIL] config.yaml 合并失败: $pyResult" -ForegroundColor Red
-    Write-Host "  ⚠ 请手动将 mcpServers 和 rules 添加到 $continueCfg" -ForegroundColor Yellow
+    $fullConfig = @"
+name: Local Config
+version: 1.0.0
+schema: v1
+
+# ═══════════════════════════════════════════════
+# 请在此配置你的模型（以你实际使用的模型为准）
+# ═══════════════════════════════════════════════
+# 单模型示例：
+# models:
+#   - name: your-model
+#     provider: openai
+#     model: your-model
+#     apiBase: http://your-api-base/v1
+#     apiKey: your-key
+#
+# tabAutocompleteModel:
+#   name: your-model
+#   provider: openai
+#   model: your-model
+#   apiBase: http://your-api-base/v1
+#   apiKey: your-key
+#
+# embeddingsProvider:
+#   provider: openai
+#   model: your-model
+#   apiBase: http://your-api-base/v1
+#   apiKey: your-key
+
+mcpServers:
+  local-search-mcp-server:
+    command: node
+    args:
+      - $mcpJsPath
+
+rules:
+  - source: $rulesPath
+
+allowAnonymousTelemetry: false
+"@
+}
+
+try {
+    Out-File -FilePath $continueCfg -InputObject $fullConfig -Encoding UTF8 -Force
+    Write-Host "  [OK] config.yaml 已生成" -ForegroundColor Green
+} catch {
+    Write-Host "  [FAIL] config.yaml 写入失败: $($_.Exception.Message)" -ForegroundColor Red
 }
 
 # ── 下载 prompts、rules 和 OUTPUT_SPEC（Continue 端）──

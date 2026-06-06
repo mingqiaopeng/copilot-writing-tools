@@ -130,22 +130,16 @@ REM ── 复制 .continue/ 适配层（Continue 端）──
 echo.
 echo [Continue] 适配层
 
-REM config.yaml — 智能合并（生成 MCP + rules，保留用户模型设置）
+REM config.yaml — 完整模板生成（保留已有 models）
 set "_DST_CFG=%CONTINUE_DIR%\config.yaml"
 set "_MCP_PATH=%TARGET_DIR%\local-search-mcp-server\index.js"
 set "_RULES_PATH=%CONTINUE_DIR%\rules\*.mdc"
 if exist "%_DST_CFG%" (
-    echo   备份现有 config.yaml...
     powershell -ExecutionPolicy Bypass -Command ^
         "$f='%_DST_CFG%';$s=(Get-Date -Format 'yyyyMMdd_HHmmss');$b=\"${f}.bak.${s}\";cp $f $b -force;Write-Host '  [BACKUP] 已备份至 ' $b"
-    echo   检测到已有 config.yaml，正在合并...
-    python -c "import yaml, os;cfg_path=os.environ['_DST_CFG'];mcp_path=os.environ['_MCP_PATH'];rules_path=os.environ['_RULES_PATH'];f=open(cfg_path,'r',encoding='utf-8');existing=yaml.safe_load(f) or {};f.close();mcp={'local-search-mcp-server':{'command':'node','args':[mcp_path]}};rules=[{'source':rules_path}];existing.setdefault('mcpServers',{});[existing['mcpServers'].setdefault(k,v) for k,v in mcp.items()];existing.setdefault('rules',[]);ex={r.get('source','') if isinstance(r,dict) else r for r in existing['rules']};[existing['rules'].append(r) for r in rules if r['source'] not in ex];yaml.dump(existing, open(cfg_path,'w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
-    if errorlevel 1 (echo   [FAIL] config.yaml 合并失败) else (echo   [OK] config.yaml 已合并（模型设置已保留）)
-) else (
-    echo   新建 config.yaml...
-    python -c "import yaml;mcp_path=r'%_MCP_PATH%';rules_path=r'%_RULES_PATH%';cfg={'mcpServers':{'local-search-mcp-server':{'command':'node','args':[mcp_path]}},'rules':[{'source':rules_path}]};yaml.dump(cfg, open(r'%_DST_CFG%','w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
-    if errorlevel 1 (echo   [FAIL] config.yaml 新建失败) else (echo   [OK] config.yaml 新建)
 )
+python -c "import yaml,os,re;cfg=r'%_DST_CFG%';mcp=r'%_MCP_PATH%';rules=r'%_RULES_PATH%';out={'name':'Local Config','version':'1.0.0','schema':'v1'};kv=[('models','models'),('tabAutocompleteModel','tab_auto'),('embeddingsProvider','embed')];uk={};[uk.update({k[1]:v}) for k in kv for v in [yaml.safe_load(open(cfg)) if os.path.exists(cfg) else {}] if v and k[0] in v];[out.update({k[0]:uk[k[1]]}) for k in kv if k[1] in uk];out['mcpServers']={'local-search-mcp-server':{'command':'node','args':[mcp]}};out['rules']=[{'source':rules}];out['allowAnonymousTelemetry']=False;yaml.dump(out,open(cfg,'w',encoding='utf-8'),allow_unicode=True,default_flow_style=False,sort_keys=False);print('[OK] config.yaml 已生成')"
+if errorlevel 1 (echo   [FAIL] config.yaml 生成失败) else echo   [OK] config.yaml 已生成
 for %%f in (".continue\prompts\*.prompt") do (
     copy /y "%%f" "%CONTINUE_DIR%\prompts\" > nul 2>&1
     if errorlevel 1 (echo   [FAIL] %%~nxf) else (echo   [OK] prompts\%%~nxf)
