@@ -2,3 +2,5 @@ node_modules/
 debug.log
 .claude/
 /local-search-mcp-server/config.json
+/.clawhub/
+/skills/
