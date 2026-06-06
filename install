@@ -244,11 +244,11 @@ $continueCfg = "$ContinueDir\config.yaml"
 Backup-File -Path $continueCfg
 
 # 用 Python 合并：生成 mcpServers 和 rules，保留用户已有的 models
-$mcpJsPath = "$CopilotDir\local-search-mcp-server\index.js".Replace('\', '\\')
-$rulesPath  = "$ContinueDir\rules\*.mdc".Replace('\', '\\')
+$mcpJsPath = "$CopilotDir/local-search-mcp-server/index.js"
+$rulesPath  = "$ContinueDir/rules/*.mdc"
 $mergeScript = @"
 import yaml, os
-cfg_path = r'$($continueCfg.Replace('\', '\\'))'
+cfg_path = r'$($continueCfg.Replace('\', '/').Replace('//', '/'))'
 existing = {}
 if os.path.exists(cfg_path):
     try:
