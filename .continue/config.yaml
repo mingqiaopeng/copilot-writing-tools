@@ -1,67 +1,34 @@
-# ──────────────────────────────────────────────────────────
-# Continue.dev 配置模板 — 中文文稿写作 Agent 工具集
-# ──────────────────────────────────────────────────────────
-# 使用方法：
-# 1. 复制本文件覆盖 ~/.continue/config.yaml
-# 2. 在你的模型配置前取消注释并填写实际参数
-# 3. 修改 mcpServers 中 index.js 的绝对路径
-# 4. 重启 Continue
-# ──────────────────────────────────────────────────────────
-
 name: Local Config
 version: 1.0.0
 schema: v1
 
-# ══════════════════════════════════════════════════════════
-# 模型配置 — 根据你实际使用的模型取消注释并填写
-# ══════════════════════════════════════════════════════════
+models:
+  - name: qwen3.6:27b
+    provider: openai
+    model: qwen3.6:27b
+    apiBase: http://10.209.24.5:11434/v1
+    apiKey: app-cv6nFBIWPJnaJwYPxTYU7Awy
 
-# ── 模型名称修改为你的实际模型名即可 ──
-# models:
-#   - name: your-model
-#     provider: openai
-#     model: your-model
-#     apiBase: http://your-api-base/v1
-#     apiKey: your-key
+tabAutocompleteModel:
+  name: qwen3.6:27b
+  provider: openai
+  model: qwen3.6:27b
+  apiBase: http://10.209.24.5:11434/v1
+  apiKey: app-cv6nFBIWPJnaJwYPxTYU7Awy
 
-# tabAutocompleteModel:
-#   name: your-model
-#   provider: openai
-#   model: your-model
-#   apiBase: http://your-api-base/v1
-#   apiKey: your-key
+embeddingsProvider:
+  provider: openai
+  model: qwen3.6:27b
+  apiBase: http://10.209.24.5:11434/v1
+  apiKey: app-cv6nFBIWPJnaJwYPxTYU7Awy
 
-# embeddingsProvider:
-#   provider: openai
-#   model: your-model
-#   apiBase: http://your-api-base/v1
-#   apiKey: your-key
-
-# allowAnonymousTelemetry: false
-
-# experimental:
-#   modelRoles:
-#     - model: your-model
-#       role: chat
-#     - model: your-model
-#       role: edit
-#     - model: your-model
-#       role: apply
-
-# ══════════════════════════════════════════════════════════
-# MCP 服务器 — 与 Copilot 端共用 local-search-mcp-server
-# 将 ${workspaceFolder} 替换为 clone 的绝对路径
-# ══════════════════════════════════════════════════════════
+allowAnonymousTelemetry: false
 
 mcpServers:
   local-search-mcp-server:
     command: node
     args:
       - ${workspaceFolder}/local-search-mcp-server/index.js
-
-# ══════════════════════════════════════════════════════════
-# 角色规则 — 4 个 Agent（点子王·批判家·分析师·档案员）
-# ══════════════════════════════════════════════════════════
 
 rules:
   - source: ${workspaceFolder}/.continue/rules/*.mdc
