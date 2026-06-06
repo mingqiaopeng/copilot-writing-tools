@@ -4,3 +4,4 @@ debug.log
 /local-search-mcp-server/config.json
 /.clawhub/
 /skills/
+/tools/scripts/copilot-chat_*
