@@ -155,6 +155,12 @@ for %%f in (".continue\rules\*.mdc") do (
     if errorlevel 1 (echo   [FAIL] %%~nxf) else (echo   [OK] rules\%%~nxf)
 )
 
+REM OUTPUT_SPEC.md
+if exist ".continue\OUTPUT_SPEC.md" (
+    copy /y ".continue\OUTPUT_SPEC.md" "%CONTINUE_DIR%\" > nul 2>&1
+    if errorlevel 1 (echo   [FAIL] OUTPUT_SPEC.md) else (echo   [OK] OUTPUT_SPEC.md)
+)
+
 REM ── Python 依赖 ──
 echo.
 echo [Python 依赖] jieba — 量化分析 Skill 分词引擎
