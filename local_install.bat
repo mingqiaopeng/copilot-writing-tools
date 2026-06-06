@@ -117,11 +117,12 @@ if not exist "%APPDATA%\Code\User\" mkdir "%APPDATA%\Code\User"
 powershell -ExecutionPolicy Bypass -Command ^
     "$mcp='%APPDATA%\Code\User\mcp.json';" ^
     "$idx='!MCP_DST_DIR!\index.js';" ^
+    "$stamp=(Get-Date -Format 'yyyyMMdd_HHmmss');" ^
     "$entry=@{command='node';type='stdio';args=@($idx)};" ^
-    "if(test-path $mcp){try{$cfg=gc $mcp -raw -encoding UTF8|ConvertFrom-Json}catch{cp $mcp \"$mcp.bak\" -force;$cfg=@{servers=@{}}}};" ^
+    "if(test-path $mcp){$bak=\"${mcp}.bak.${stamp}\";cp $mcp $bak -force;" ^
+    "  try{$cfg=gc $mcp -raw -encoding UTF8|ConvertFrom-Json;Write-Host '  [BACKUP] 已备份至 ' $bak}catch{cp $mcp $bak -force;$cfg=@{servers=@{}}}};" ^
     "if(-not $cfg.servers){$cfg=@{servers=@{}}};" ^
     "$cfg.servers|Add-Member -MemberType NoteProperty -Name 'local-search-mcp-server' -Value $entry -Force;" ^
-    "Copy-Item $mcp \"$mcp.bak\" -Force -ErrorAction SilentlyContinue;" ^
     "$cfg|ConvertTo-Json -Depth 4|Out-File $mcp -Encoding UTF8 -Force;" ^
     "if(test-path $mcp){Write-Host '  [OK] MCP 配置已写入'}else{Write-Host '  [FAIL] 写入失败'}"
 
@@ -134,6 +135,9 @@ set "_SRC_CFG=%~dp0.continue\config.yaml"
 set "_DST_CFG=%CONTINUE_DIR%\config.yaml"
 if exist "%_SRC_CFG%" (
     if exist "%_DST_CFG%" (
+        echo   备份现有 config.yaml...
+        powershell -ExecutionPolicy Bypass -Command ^
+            "$f='%_DST_CFG%';$s=(Get-Date -Format 'yyyyMMdd_HHmmss');$b=\"${f}.bak.${s}\";cp $f $b -force;Write-Host '  [BACKUP] 已备份至 ' $b"
         echo   检测到已有 config.yaml，正在合并...
         python -c "import yaml, os; tc=os.environ['_DST_CFG']; sc=os.environ['_SRC_CFG']; u=yaml.safe_load(open(tc,'r',encoding='utf-8')) or {}; s=yaml.safe_load(open(sc,'r',encoding='utf-8')) or {}; ms=s.get('mcpServers',{}); [u.setdefault('mcpServers',{}).__setitem__(k,v) for k,v in ms.items() if k not in u.get('mcpServers',{})]; sr=s.get('rules',[]); u.setdefault('rules',[]); ex={r.get('source') for r in u['rules'] if isinstance(r,dict)}; [u['rules'].append(r) or ex.add(r.get('source','')) for r in sr if (r.get('source') if isinstance(r,dict) else str(r)) not in ex]; yaml.dump(u, open(tc,'w',encoding='utf-8'), allow_unicode=True, default_flow_style=False, sort_keys=False)"
         if errorlevel 1 (echo   [FAIL] config.yaml 合并失败) else (echo   [OK] config.yaml 已合并)

@@ -144,6 +144,17 @@ foreach ($name in $mcpFiles) {
     }
 }
 
+# ── 备份函数 ──
+function Backup-File {
+    param([string]$Path)
+    if (Test-Path $Path) {
+        $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
+        $backup = "${Path}.bak.${stamp}"
+        Copy-Item $Path $backup -Force
+        Write-Host "  [BACKUP] 已备份至 $backup" -ForegroundColor Gray
+    }
+}
+
 # ── 生成 MCP config.json（不存在时从 example 复制）──
 Write-Host ""
 Write-Host "  检查 MCP 配置..."
@@ -182,7 +193,7 @@ if (Test-Path $vsCodeMcpPath) {
         Write-Host "  检测到已有 MCP 配置，将自动合并。" -ForegroundColor Gray
     } catch {
         Write-Host "  [WARN] 现有 mcp.json 格式异常，将备份后覆盖。" -ForegroundColor Yellow
-        Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
+        Backup-File -Path $vsCodeMcpPath
         $existingConfig = $null
     }
 }
@@ -208,14 +219,9 @@ if ($existingConfig -and $existingConfig.servers) {
 }
 
 try {
-    if (Test-Path $vsCodeMcpPath) {
-        Copy-Item $vsCodeMcpPath "$vsCodeMcpPath.bak" -Force
-    }
+    Backup-File -Path $vsCodeMcpPath
     $mergedConfig | ConvertTo-Json -Depth 4 | Out-File -FilePath $vsCodeMcpPath -Encoding UTF8 -Force
     Write-Host "  [OK] MCP 配置已写入 $vsCodeMcpPath" -ForegroundColor Green
-    if (Test-Path "$vsCodeMcpPath.bak") {
-        Write-Host "  原配置已备份至 $vsCodeMcpPath.bak" -ForegroundColor Gray
-    }
 } catch {
     Write-Host "  [FAIL] 无法写入 MCP 配置文件 — $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  请手动将以下内容添加到 $vsCodeMcpPath ：" -ForegroundColor Yellow
@@ -234,6 +240,11 @@ try {
 # ── 下载 .continue/ 适配层（Continue 端）──
 Write-Host ""
 Write-Host "[Continue] 适配层 (.continue/)" -ForegroundColor Yellow
+
+# 备份用户已有的 config.yaml 后再覆盖
+$continueCfg = "$ContinueDir\config.yaml"
+Backup-File -Path $continueCfg
+
 $continueFiles = @(
     @{src = "config.yaml"; dest = "config.yaml"},
     @{src = "prompts/写中心句.prompt"; dest = "prompts\写中心句.prompt"},
