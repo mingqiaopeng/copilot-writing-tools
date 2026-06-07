@@ -1,0 +1,145 @@
+{
+  "name": "sanitize-filename",
+  "displayName": "Sanitize Filename",
+  "description": "自动检测并规范化包含特殊字符的文件名，解决 Copilot 等工具因文件名特殊字符导致的问题",
+  "version": "1.4.1",
+  "publisher": "custom",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "filename",
+    "sanitize",
+    "rename",
+    "special characters",
+    "copilot"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sanitizeFilename.sanitizeCurrent",
+        "title": "Sanitize Current Filename",
+        "category": "Sanitize Filename",
+        "icon": "$(warning)"
+      },
+      {
+        "command": "sanitizeFilename.sanitizeAllInWorkspace",
+        "title": "Sanitize All Filenames in Workspace",
+        "category": "Sanitize Filename"
+      },
+      {
+        "command": "sanitizeFilename.toggleAutoMode",
+        "title": "Toggle Auto Sanitize Mode",
+        "category": "Sanitize Filename"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "sanitizeFilename.sanitizeCurrent",
+          "when": "resourceScheme == file",
+          "group": "7_modification@1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "sanitizeFilename.sanitizeCurrent",
+          "group": "1_modification@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sanitizeFilename.sanitizeCurrent",
+          "group": "1_modification@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Sanitize Filename",
+      "properties": {
+        "sanitizeFilename.mode": {
+          "type": "string",
+          "default": "prompt",
+          "enum": [
+            "auto",
+            "prompt",
+            "warn"
+          ],
+          "enumDescriptions": [
+            "自动重命名（静默执行，无需确认）",
+            "提示确认（弹出对话框询问是否重命名）",
+            "仅警告（只显示通知，不自动重命名）"
+          ],
+          "description": "文件名规范化模式"
+        },
+        "sanitizeFilename.pattern": {
+          "type": "string",
+          "default": "[\"'(){}\\[\\]#&!@$%^*+=~`<>?|\\s“”‘’]",
+          "description": "需要替换的正则表达式（匹配特殊字符）"
+        },
+        "sanitizeFilename.replacement": {
+          "type": "string",
+          "default": "_",
+          "description": "替换字符"
+        },
+        "sanitizeFilename.trimEdges": {
+          "type": "boolean",
+          "default": true,
+          "description": "去除文件名首尾的下划线/连字符"
+        },
+        "sanitizeFilename.collapseConsecutive": {
+          "type": "boolean",
+          "default": true,
+          "description": "合并连续的特殊字符为单个替换字符"
+        },
+        "sanitizeFilename.preserveExtension": {
+          "type": "boolean",
+          "default": true,
+          "description": "保留文件扩展名"
+        },
+        "sanitizeFilename.checkOnOpen": {
+          "type": "boolean",
+          "default": true,
+          "description": "打开文件时自动检测"
+        },
+        "sanitizeFilename.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "保存文件后自动检测（保存完成后，若文件名含特殊字符则提示）"
+        },
+        "sanitizeFilename.sanitizeOnCreate": {
+          "type": "boolean",
+          "default": true,
+          "description": "新建文件时自动检测（通过文件监视器）"
+        },
+        "sanitizeFilename.ignoredPatterns": {
+          "type": "array",
+          "default": [
+            "node_modules",
+            ".git",
+            ".vscode"
+          ],
+          "description": "忽略的路径模式（glob）"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  }
+}

@@ -5,3 +5,4 @@ debug.log
 /.clawhub/
 /skills/
 /tools/scripts/copilot-chat_*
+*.vsix

@@ -1,0 +1,15 @@
+# 不打包进 .vsix 的文件
+src/
+tsconfig.json
+node_modules/
+.gitignore
+build.sh
+*.vsix
+
+# 开发相关
+.vscode/
+.vscode-test/
+
+# 日志和缓存
+*.log
+npm-debug.log*
