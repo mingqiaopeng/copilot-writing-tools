@@ -1,0 +1,6 @@
+{
+  "sanitizeFilename.sanitizeCurrent.title": "Sanitize Current Filename",
+  "sanitizeFilename.sanitizeAllInWorkspace.title": "Sanitize All Filenames in Workspace",
+  "sanitizeFilename.toggleAutoMode.title": "Toggle Auto Sanitize Mode",
+  "sanitizeFilename.category": "Sanitize Filename"
+}

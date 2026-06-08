@@ -2,7 +2,7 @@
   "name": "sanitize-filename",
   "displayName": "Sanitize Filename",
   "description": "自动检测并规范化包含特殊字符的文件名，解决 Copilot 等工具因文件名特殊字符导致的问题",
-  "version": "1.4.1",
+  "version": "1.5.2",
   "publisher": "custom",
   "engines": {
     "vscode": "^1.74.0"
@@ -25,19 +25,19 @@
     "commands": [
       {
         "command": "sanitizeFilename.sanitizeCurrent",
-        "title": "Sanitize Current Filename",
-        "category": "Sanitize Filename",
+        "title": "%sanitizeFilename.sanitizeCurrent.title%",
+        "category": "%sanitizeFilename.category%",
         "icon": "$(warning)"
       },
       {
         "command": "sanitizeFilename.sanitizeAllInWorkspace",
-        "title": "Sanitize All Filenames in Workspace",
-        "category": "Sanitize Filename"
+        "title": "%sanitizeFilename.sanitizeAllInWorkspace.title%",
+        "category": "%sanitizeFilename.category%"
       },
       {
         "command": "sanitizeFilename.toggleAutoMode",
-        "title": "Toggle Auto Sanitize Mode",
-        "category": "Sanitize Filename"
+        "title": "%sanitizeFilename.toggleAutoMode.title%",
+        "category": "%sanitizeFilename.category%"
       }
     ],
     "menus": {
@@ -66,7 +66,7 @@
       "properties": {
         "sanitizeFilename.mode": {
           "type": "string",
-          "default": "prompt",
+          "default": "warn",
           "enum": [
             "auto",
             "prompt",

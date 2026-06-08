@@ -237,8 +237,8 @@ async function handleFile(
     if (pendingChecks.has(filePath)) {
         return;
     }
-    // 已处理过的文件不再重复打扰（保存场景除外：用户主动保存应每次都检查）
-    if (context !== 'save' && processedFiles.has(filePath)) {
+    // 已处理过的文件不再重复打扰（手动触发和保存场景除外：用户主动操作应每次都执行）
+    if ((context === 'open' || context === 'create') && processedFiles.has(filePath)) {
         return;
     }
 
@@ -531,24 +531,37 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.StatusBarAlignment.Right,
         100
     );
-    statusBarItem.command = 'sanitizeFilename.sanitizeCurrent';
     statusBarItem.show();
 
     function updateStatusBar() {
-        const cfg = getConfig();
-        const mode: string = cfg.get('mode') || 'prompt';
-        const modeIcon = mode === 'auto' ? '$(sync)' : mode === 'warn' ? '$(warning)' : '$(file-code)';
-        const modeLabel = mode === 'auto' ? 'Auto' : mode === 'warn' ? 'Warn' : 'Prompt';
-        statusBarItem.text = modeIcon + ' Sanitize:' + modeLabel;
-        statusBarItem.tooltip =
-            mode === 'auto'
-                ? '文件名自动规范化（点击切换）'
-                : mode === 'warn'
-                    ? '文件名规范化: 仅警告（点击切换）'
-                    : '文件名规范化: 提示确认（点击切换）';
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document.uri.scheme !== 'file') {
+            // 没有打开文件或为 untitled buffer
+            statusBarItem.text = '$(file) Sanitize';
+            statusBarItem.tooltip = 'Sanitize Filename';
+            statusBarItem.command = 'sanitizeFilename.toggleAutoMode';
+            return;
+        }
+
+        const fname = path.basename(editor.document.uri.fsPath);
+        const isZh = vscode.env.language.startsWith('zh');
+        if (needsSanitization(fname)) {
+            statusBarItem.text = '$(error) ' + (isZh ? '规范文件名' : 'Sanitize');
+            statusBarItem.tooltip = (isZh ? '点击规范化: ' : 'Click to sanitize: ') + fname + ' → ' + sanitizeFilename(fname);
+            statusBarItem.command = 'sanitizeFilename.sanitizeCurrent';
+        } else {
+            statusBarItem.text = '$(pass) ' + (isZh ? '文件名规范' : 'Filename OK');
+            statusBarItem.tooltip = isZh ? '文件名规范，无需处理' : 'Filename is clean, no action needed';
+            statusBarItem.command = 'sanitizeFilename.sanitizeCurrent';
+        }
     }
+
+    // 切换编辑器标签时更新状态栏
+    const onEditorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(() => {
+        updateStatusBar();
+    });
+
     updateStatusBar();
-    statusBarItem.command = 'sanitizeFilename.toggleAutoMode';
 
     // ── 注册所有 disposable ─────────────────────────────
     context.subscriptions.push(
@@ -560,6 +573,7 @@ export function activate(context: vscode.ExtensionContext) {
         onOpenDisposable,
         onPostSaveDisposable,
         onCloseDisposable,
+        onEditorChangeDisposable,
         statusBarItem
     );
 }

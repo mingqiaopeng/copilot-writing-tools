@@ -125,3 +125,4 @@ install / local_install.bat          # 统一安装脚本（同时部署 Copilot
 - **修改触发词**: 编辑 frontmatter `description` 中的 `触发条件` 列表
 - **验证格式**: 检查 YAML frontmatter 分隔符 `---` 是否正确，`description` 中的缩进是否一致
 - **新增 Agent↔Skill 互推**：新增 Skill 后，检查是否有 Agent 应在诊断后推荐该 Skill，更新对应 Agent 的「注意事项」推荐列表；新增 Agent 后，检查其诊断结果能否关联现有 Skill，加入推荐逻辑
+- **Sanitize Filename 插件版本号铁律**：每次修改 `src/extension.ts` 或 `package.json` 后重新打包时，**必须**递增 `package.json` 中的 `version` 字段（patch +1），同步更新 `CHANGELOG.md`，**绝不**复用同一版本号重新打包

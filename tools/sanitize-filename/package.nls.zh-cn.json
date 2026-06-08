@@ -1,0 +1,6 @@
+{
+  "sanitizeFilename.sanitizeCurrent.title": "规范化当前文件名",
+  "sanitizeFilename.sanitizeAllInWorkspace.title": "规范化工作区全部文件名",
+  "sanitizeFilename.toggleAutoMode.title": "切换自动规范化模式",
+  "sanitizeFilename.category": "Sanitize Filename"
+}
