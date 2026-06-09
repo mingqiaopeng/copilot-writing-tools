@@ -6,3 +6,9 @@ debug.log
 /skills/
 /tools/scripts/copilot-chat_*
 *.vsix
+
+# esrg build artifacts
+tools/esrg/bins/
+tools/esrg/build/
+tools/esrg/dist/
+tools/esrg/*.spec
