@@ -37,7 +37,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     ├── 传达提纲/                    # 政论文章结构化摘要提取
     └── 优化句式/                    # 消除英式中文与翻译腔
 
-local-search-mcp-server/             # 共享 MCP 服务器（路径由自身 config.json 提供，不依赖外部配置）
+local-search-mcp-server/             # MCP 服务器（路径由自身 config.json 提供，不依赖外部配置）
 tools/                               # 共享工具（esrg 搜索 TUI + analyze.py 量化分析脚本）
 assets/                              # 共享资源（Big_4_Agent.png + 演示文稿）
 prompt/                              # 共享系统提示模板

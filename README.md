@@ -353,7 +353,7 @@ copilot-writing-tools/
 │       ├── 优化句式/                           #     消除英式中文与翻译腔
 │       └── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
 │
-├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器（Copilot）
+├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器
 │   ├── index.js                                #   主程序（路径全由 config.json 提供）
 │   ├── package.json                            #   依赖配置
 │   ├── config.example.json                     #   ⚠ 配置模板，复制为 config.json 并填写
@@ -419,7 +419,7 @@ copilot-writing-tools/
 
 ### MCP 服务器架构
 
-MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持——**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**。Copilot 使用。
+MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持——**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**。
 
 **提供的 MCP 工具：**
 
