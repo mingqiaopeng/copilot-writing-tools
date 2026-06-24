@@ -5,7 +5,6 @@ cd /d "%~dp0"
 setlocal enabledelayedexpansion
 
 set TARGET_DIR=%USERPROFILE%\.copilot
-set CONTINUE_DIR=%USERPROFILE%\.continue
 
 echo.
 echo ============================================
@@ -13,7 +12,6 @@ echo   中文文稿写作 Agent 工具集 本地安装
 echo ============================================
 echo.
 echo Copilot 部署目标: %TARGET_DIR%
-echo Continue 部署目标: %CONTINUE_DIR%
 echo 数据来源: %~dp0
 echo.
 
@@ -21,8 +19,6 @@ REM ── 创建目录 ──
 echo [目录]
 mkdir "%TARGET_DIR%\agents" 2>nul
 mkdir "%TARGET_DIR%\skills" 2>nul
-mkdir "%CONTINUE_DIR%\prompts" 2>nul
-mkdir "%CONTINUE_DIR%\rules" 2>nul
 echo   目录已就绪
 
 REM ── 复制 Agents ──
@@ -126,45 +122,12 @@ powershell -ExecutionPolicy Bypass -Command ^
     "$cfg|ConvertTo-Json -Depth 4|Out-File $mcp -Encoding UTF8 -Force;" ^
     "if(test-path $mcp){Write-Host '  [OK] MCP 配置已写入'}else{Write-Host '  [FAIL] 写入失败'}"
 
-REM ── 复制 .continue/ 适配层（Continue 端）──
-echo.
-echo [Continue] 适配层
-
-REM config.yaml — 完整模板生成（保留已有 models）
-set "_DST_CFG=%CONTINUE_DIR%\config.yaml"
-set "_MCP_PATH=%TARGET_DIR%\local-search-mcp-server\index.js"
-set "_RULES_PATH=%CONTINUE_DIR%\rules\*.mdc"
-if exist "%_DST_CFG%" (
-    powershell -ExecutionPolicy Bypass -Command ^
-        "$f='%_DST_CFG%';$s=(Get-Date -Format 'yyyyMMdd_HHmmss');$b=\"${f}.bak.${s}\";cp $f $b -force;Write-Host '  [BACKUP] 已备份至 ' $b"
-)
-python -c "import yaml,os,re;cfg=r'%_DST_CFG%';mcp=r'%_MCP_PATH%';rules=r'%_RULES_PATH%';out={'name':'Local Config','version':'1.0.0','schema':'v1'};kv=[('models','models'),('tabAutocompleteModel','tab_auto'),('embeddingsProvider','embed')];uk={};[uk.update({k[1]:v}) for k in kv for v in [yaml.safe_load(open(cfg)) if os.path.exists(cfg) else {}] if v and k[0] in v];[out.update({k[0]:uk[k[1]]}) for k in kv if k[1] in uk];out['mcpServers']={'local-search-mcp-server':{'command':'node','args':[mcp]}};out['rules']=[{'source':rules}];out['allowAnonymousTelemetry']=False;yaml.dump(out,open(cfg,'w',encoding='utf-8'),allow_unicode=True,default_flow_style=False,sort_keys=False);print('[OK] config.yaml 已生成')"
-if errorlevel 1 (echo   [FAIL] config.yaml 生成失败) else echo   [OK] config.yaml 已生成
-for %%f in (".continue\prompts\*.prompt") do (
-    copy /y "%%f" "%CONTINUE_DIR%\prompts\" > nul 2>&1
-    if errorlevel 1 (echo   [FAIL] %%~nxf) else (echo   [OK] prompts\%%~nxf)
-)
-for %%f in (".continue\rules\*.mdc") do (
-    copy /y "%%f" "%CONTINUE_DIR%\rules\" > nul 2>&1
-    if errorlevel 1 (echo   [FAIL] %%~nxf) else (echo   [OK] rules\%%~nxf)
-)
-
-REM OUTPUT_SPEC.md
-if exist ".continue\OUTPUT_SPEC.md" (
-    copy /y ".continue\OUTPUT_SPEC.md" "%CONTINUE_DIR%\" > nul 2>&1
-    if errorlevel 1 (echo   [FAIL] OUTPUT_SPEC.md) else (echo   [OK] OUTPUT_SPEC.md)
-)
-
 REM ── Python 依赖 ──
 echo.
 echo [Python 依赖] jieba — 量化分析 Skill 分词引擎
 echo   正在安装 jieba (pip install jieba)...
 pip install jieba > nul 2>&1
 if errorlevel 1 (echo   [WARN] pip install jieba 失败，请手动安装: pip install jieba) else (echo   [OK] jieba 安装完成)
-echo [Python 依赖] pyyaml — config.yaml 合并
-echo   正在安装 pyyaml (pip install pyyaml)...
-pip install pyyaml > nul 2>&1
-if errorlevel 1 (echo   [WARN] pip install pyyaml 失败，请手动安装: pip install pyyaml) else (echo   [OK] pyyaml 安装完成)
 
 REM ── 收尾 ──
 echo.
@@ -185,15 +148,10 @@ echo   skills/                          (%SKILL_COUNT% 个 Skill)
 echo   local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）
 echo   MCP 配置已合并至 %%APPDATA%%\Code\User\mcp.json
 echo.
-echo Continue 端已部署到: %CONTINUE_DIR%
-echo   config.yaml                      配置
-echo   prompts/                         斜杠命令
-echo   rules/                           角色规则
-echo.
 echo ⚠ 首次安装后请务必编辑 MCP 配置：
 echo   编辑 !MCP_DST_DIR!\config.json
 echo   填写 kbRoot（知识库根路径）和 rhetoricDbPath（好词好句.jsonl 路径）
 echo.
-echo 重启 VS Code 或 Continue 后生效。
+echo 重启 VS Code 后生效。
 echo.
 pause

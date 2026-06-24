@@ -37,16 +37,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     ├── 传达提纲/                    # 政论文章结构化摘要提取
     └── 优化句式/                    # 消除英式中文与翻译腔
 
-.continue/                           # Continue.dev 适配层（新建）
-├── config.yaml                      # MCP + 规则配置
-├── prompts/                         # .prompt 斜杠命令文件
-└── rules/                           # .mdc 角色规则文件
-
 local-search-mcp-server/             # 共享 MCP 服务器（路径由自身 config.json 提供，不依赖外部配置）
 tools/                               # 共享工具（esrg 搜索 TUI + analyze.py 量化分析脚本）
 assets/                              # 共享资源（Big_4_Agent.png + 演示文稿）
 prompt/                              # 共享系统提示模板
-install / local_install.bat          # 统一安装脚本（同时部署 Copilot 和 Continue 两端）
+install / local_install.bat          # 统一安装脚本
 ```
 
 ### Key Distinctions
@@ -120,7 +115,6 @@ install / local_install.bat          # 统一安装脚本（同时部署 Copilot
 
 - **新增 Skill**: 在 `.copilot/skills/` 下创建目录 `技能名/SKILL.md`，参考现有 SKILL.md 的 frontmatter 和章节结构
 - **新增 Agent**: 在 `.copilot/agents/` 下创建 `名称.agent.md`，注意需要 `tools` 和 `target` 字段，且遵循"不修改文件"原则
-- **新增继续适配**：新增 Skill 后，同步在 `.continue/prompts/` 下创建对应的 `.prompt` 翻译文件
 - **MCP 配置**：MCP 服务器的配置位于 `local-search-mcp-server/config.json`（不在 git 中），所有路径由该文件提供，代码不做任何路径推测
 - **修改触发词**: 编辑 frontmatter `description` 中的 `触发条件` 列表
 - **验证格式**: 检查 YAML frontmatter 分隔符 `---` 是否正确，`description` 中的缩进是否一致

@@ -3,12 +3,11 @@
 #   irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
 # 本地执行:
 #   先改名为 install.ps1，再 .\install.ps1
-# 说明：统一安装脚本，同时部署 Copilot 端（~/.copilot/）和 Continue 端（~/.continue/）
+# 说明：统一安装脚本，部署 Copilot 端（~/.copilot/）
 
 $RepoBranch = "master"
 $BaseUrl    = "https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/$RepoBranch"
 $CopilotDir = "$env:USERPROFILE\.copilot"
-$ContinueDir = "$env:USERPROFILE\.continue"
 
 $Agents = @(
     "点子王.agent.md",
@@ -45,7 +44,6 @@ Write-Host "  中文文稿写作 Agent 工具集 一键安装" -ForegroundColor 
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Copilot 部署目标: $CopilotDir" -ForegroundColor Gray
-Write-Host "Continue 部署目标: $ContinueDir" -ForegroundColor Gray
 Write-Host "数据来源: $BaseUrl" -ForegroundColor Gray
 Write-Host ""
 
@@ -53,9 +51,7 @@ Write-Host ""
 Write-Host "[目录]" -ForegroundColor Yellow
 $dirs = @(
     "$CopilotDir\agents",
-    "$CopilotDir\skills",
-    "$ContinueDir\prompts",
-    "$ContinueDir\rules"
+    "$CopilotDir\skills"
 )
 foreach ($dir in $dirs) {
     Write-Host "  创建 $dir"
@@ -237,146 +233,6 @@ try {
     Write-Host ($mcpSnippet | ConvertTo-Json -Depth 3) -ForegroundColor Gray
 }
 
-# ── 配置 Continue config.yaml（完整模板生成，保留已有 models）──
-Write-Host ""
-Write-Host "  配置 Continue config.yaml..." -ForegroundColor Gray
-$continueCfg = "$ContinueDir\config.yaml"
-$mcpJsPath  = "$CopilotDir/local-search-mcp-server/index.js"
-$rulesPath  = "$ContinueDir/rules/*.mdc"
-
-Backup-File -Path $continueCfg
-
-# 读取已有配置中的 models 区块，保留用户模型设置
-$modelsBlock = ""
-if (Test-Path $continueCfg) {
-    $oldRaw = Get-Content -Raw -Path $continueCfg
-    if ($oldRaw -match '(?ms)^models:.*?(?=^[a-z][a-z]|\Z)') {
-        $modelsBlock = $matches[0]
-    }
-    if ($oldRaw -match '(?ms)^tabAutocompleteModel:.*?(?=^[a-z][a-z]|\Z)') {
-        $modelsBlock += "`n" + $matches[0]
-    }
-    if ($oldRaw -match '(?ms)^embeddingsProvider:.*?(?=^[a-z][a-z]|\Z)') {
-        $modelsBlock += "`n" + $matches[0]
-    }
-}
-
-# 生成完整配置
-if ($modelsBlock) {
-    $fullConfig = @"
-$modelsBlock
-
-mcpServers:
-  local-search-mcp-server:
-    command: node
-    args:
-      - $mcpJsPath
-
-rules:
-  - source: $rulesPath
-
-allowAnonymousTelemetry: false
-"@
-} else {
-    $fullConfig = @"
-name: Local Config
-version: 1.0.0
-schema: v1
-
-# ═══════════════════════════════════════════════
-# 请在此配置你的模型（以你实际使用的模型为准）
-# ═══════════════════════════════════════════════
-# 单模型示例：
-# models:
-#   - name: your-model
-#     provider: openai
-#     model: your-model
-#     apiBase: http://your-api-base/v1
-#     apiKey: your-key
-#
-# tabAutocompleteModel:
-#   name: your-model
-#   provider: openai
-#   model: your-model
-#   apiBase: http://your-api-base/v1
-#   apiKey: your-key
-#
-# embeddingsProvider:
-#   provider: openai
-#   model: your-model
-#   apiBase: http://your-api-base/v1
-#   apiKey: your-key
-
-mcpServers:
-  local-search-mcp-server:
-    command: node
-    args:
-      - $mcpJsPath
-
-rules:
-  - source: $rulesPath
-
-allowAnonymousTelemetry: false
-"@
-}
-
-try {
-    Out-File -FilePath $continueCfg -InputObject $fullConfig -Encoding UTF8 -Force
-    Write-Host "  [OK] config.yaml 已生成" -ForegroundColor Green
-} catch {
-    Write-Host "  [FAIL] config.yaml 写入失败: $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# ── 下载 prompts、rules 和 OUTPUT_SPEC（Continue 端）──
-Write-Host ""
-Write-Host "[Continue] prompts + rules + OUTPUT_SPEC" -ForegroundColor Yellow
-
-# 下载 OUTPUT_SPEC.md
-$specUrl  = "$BaseUrl/.continue/OUTPUT_SPEC.md"
-$specDest = "$ContinueDir\OUTPUT_SPEC.md"
-Write-Host "  $specUrl" -ForegroundColor Gray
-try {
-    Invoke-WebRequest -Uri $specUrl -OutFile $specDest -ErrorAction Stop | Out-Null
-    Write-Host "  [OK] OUTPUT_SPEC.md" -ForegroundColor Green
-} catch {
-    Write-Host "  [FAIL] OUTPUT_SPEC.md — $($_.Exception.Message)" -ForegroundColor Red
-}
-
-# 下载全部 19 个 .prompt 斜杠命令
-$promptFiles = @(
-    "写中心句", "摘要生成", "标题优化", "段落重组", "大纲生成",
-    "增加过渡", "缩减篇幅", "扩充篇幅", "合并段落", "拆分段落",
-    "简化修辞", "神来之笔", "增加修辞", "去除标签", "校对勘误",
-    "统一风格", "传达提纲", "优化句式", "量化分析"
-)
-$null = New-Item -ItemType Directory -Force -Path "$ContinueDir\prompts"
-foreach ($name in $promptFiles) {
-    $url  = "$BaseUrl/.continue/prompts/$name.prompt"
-    $dest = "$ContinueDir\prompts\$name.prompt"
-    Write-Host "  $url" -ForegroundColor Gray
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
-        Write-Host "  [OK] prompts/$name.prompt" -ForegroundColor Green
-    } catch {
-        Write-Host "  [FAIL] $name.prompt — $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
-
-# 下载全部 4 个 .mdc 角色规则
-$rulesFiles = @("点子王", "批判家", "分析师", "档案员")
-$null = New-Item -ItemType Directory -Force -Path "$ContinueDir\rules"
-foreach ($name in $rulesFiles) {
-    $url  = "$BaseUrl/.continue/rules/$name.mdc"
-    $dest = "$ContinueDir\rules\$name.mdc"
-    Write-Host "  $url" -ForegroundColor Gray
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
-        Write-Host "  [OK] rules/$name.mdc" -ForegroundColor Green
-    } catch {
-        Write-Host "  [FAIL] $name.mdc — $($_.Exception.Message)" -ForegroundColor Red
-    }
-}
-
 # ── Python 依赖（量化分析 Skill 需要 jieba）──
 Write-Host ""
 Write-Host "[Python 依赖] jieba — 量化分析 Skill 分词引擎" -ForegroundColor Yellow
@@ -400,14 +256,9 @@ Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
 Write-Host "  local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）"
 Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
 Write-Host ""
-Write-Host "Continue 端已部署到: $ContinueDir"
-Write-Host "  config.yaml                      配置"
-Write-Host "  prompts/                         斜杠命令"
-Write-Host "  rules/                           角色规则"
-Write-Host ""
 Write-Host "⚠ 首次安装后请务必编辑 MCP 配置：" -ForegroundColor Yellow
 Write-Host "  编辑 $mcpConfigDest" -ForegroundColor Yellow
 Write-Host "  填写 kbRoot（知识库根路径）和 rhetoricDbPath（好词好句.jsonl 路径）" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "重启 VS Code 或 Continue 后生效。" -ForegroundColor Gray
+Write-Host "重启 VS Code 后生效。" -ForegroundColor Gray
 Write-Host ""

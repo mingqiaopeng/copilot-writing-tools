@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动 · 同步支持 Continue.dev</em><br />
+  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
 	  <em>本项目"蒸馏"了开发者 10 年来从事文稿起草工作的近一千个技巧、经验与知识点（其中 Skill 涵盖 744 个、Agent 涵盖 225 个），并将其有机融合到工作流中。</em>
 </p>
 
@@ -45,7 +45,7 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 > [!TIP]
 > **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署所有内容至两端。
 >
-> 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 目录复制到 `~/.copilot/`（全局生效），或将 `.continue/` 目录复制到 `~/.continue/`。
+> 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 目录复制到 `~/.copilot/`（全局生效）。
 
 > [!IMPORTANT]
 > ## ⚠️ 本项目不包含"生成"功能
@@ -169,7 +169,7 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 
 **手动安装（离线环境适用）：**
 
-- **全局安装**：将 `.copilot/agents/` 和 `.copilot/skills/` 复制到 `~/.copilot/`，`.continue/` 复制到 `~/.continue/`。
+- **全局安装**：将 `.copilot/agents/` 和 `.copilot/skills/` 复制到 `~/.copilot/`。
 
 ### 激活
 
@@ -353,12 +353,7 @@ copilot-writing-tools/
 │       ├── 优化句式/                           #     消除英式中文与翻译腔
 │       └── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
 │
-├── .continue/                                  # 🟢 Continue.dev 适配层（新建）
-│   ├── config.yaml                             #   MCP + 规则配置
-│   ├── prompts/                                #   .prompt 斜杠命令文件
-│   └── rules/                                  #   .mdc 角色规则文件
-│
-├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器（两平台共用）
+├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器（Copilot）
 │   ├── index.js                                #   主程序（路径全由 config.json 提供）
 │   ├── package.json                            #   依赖配置
 │   ├── config.example.json                     #   ⚠ 配置模板，复制为 config.json 并填写
@@ -381,7 +376,7 @@ copilot-writing-tools/
 │   ├── 输出规范.md                             #   文本结构、标题层级与段落组织要求
 │   └── 任务分解.md                             #   复杂任务拆解方法论
 │
-├── install                                     # 📦 一键安装脚本（同时部署 Copilot + Continue）
+├── install                                     # 📦 一键安装脚本
 ├── local_install.bat                           # 📦 本地安装脚本
 ├── README.md                                   # 📖 项目说明
 └── CLAUDE.md                                   # 🤖 Claude Code 配置
@@ -393,41 +388,6 @@ copilot-writing-tools/
 - [Agent Skills 规范](https://agentskills.io/specification) — 由 Anthropic 发起的开放标准（2025.12）
 - [VS Code 自定义 Agent 文档](https://code.visualstudio.com/docs/copilot/custom-agents) — 官方使用指南
 - [skills.sh](https://skills.sh) — 社区 Skill 市场
-
----
-
-## 🟢 Continue.dev 适配
-
-本工具集同时支持 [Continue.dev](https://docs.continue.dev/) 插件。在根目录的 `.continue/` 目录中提供了适配层，将 Copilot 原生的 `SKILL.md` / `.agent.md` 格式翻译为 Continue 的 `.prompt` 斜杠命令和 `.mdc` 规则文件。
-
-### 适配内容
-
-| 组件 | Continue 等效 | 说明 |
-|------|--------------|------|
-| 19 个 Skill | `prompts/*.prompt` 斜杠命令 | 拼音连字符命名，如 `/xie-zhongxin-ju` |
-| 4 个 Agent | `rules/*.mdc` 角色规则 | 按需启用（`alwaysApply: false`） |
-| MCP 服务器 | `config.yaml` 中声明 | 与 Copilot 共用 `local-search-mcp-server/` |
-| 项目指令 | `rules/00-project-guide.mdc` | `alwaysApply: true` 全局生效 |
-
-### 使用方法
-
-```powershell
-# 方式一：一键安装（推荐）
-irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/install | iex
-
-# 方式二：手动部署
-# 将 .continue/ 目录复制到 ~/.continue/ 即可
-```
-
-启动 Continue 后在输入框输入 `/xie-zhongxin-ju`（写中心句）、`/biaoti-youhua`（标题优化）等斜杠命令即可调用对应 Skill。Agent 规则在 Agent 选择面板中按需启用。
-
-> [!NOTE]
-> **Continue vs Copilot 体验差异**
-> - Copilot 通过语义自动匹配触发（说"帮我改"自动匹配对应 Skill）
-> - Continue 需通过斜杠命令 `/前缀` 精确调用
-> - 功能完全相同，触发方式不同
-
----
 
 ## 🎯 使用建议
 
@@ -459,7 +419,7 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 
 ### MCP 服务器架构
 
-MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持——**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**。两平台（Copilot + Continue）共用同一份代码，各自通过配置文件指向该服务器。
+MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持——**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**。Copilot 使用。
 
 **提供的 MCP 工具：**
 
@@ -521,19 +481,7 @@ cp local-search-mcp-server/config.example.json local-search-mcp-server/config.js
 
 > 一键安装脚本会自动完成此配置。
 
-**4. Continue 端注册 MCP（Continue 用户）：**
-
-`.continue/config.yaml` 已内置以下配置，开箱即用：
-
-```yaml
-mcpServers:
-  local-search-mcp-server:
-    command: node
-    args:
-      - "${workspaceFolder}/local-search-mcp-server/index.js"
-```
-
-**5. 启用 VS Code MCP 支持：**
+**4. 启用 VS Code MCP 支持：**
 
 打开 VS Code 设置（`Ctrl+,`），确保以下选项已开启：
 
@@ -544,7 +492,7 @@ mcpServers:
 }
 ```
 
-**6. 重启 VS Code / Continue**，在 Agent 选择器中即可使用档案员。
+**5. 重启 VS Code**，在 Agent 选择器中即可使用档案员。
 
 ---
 
