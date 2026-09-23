@@ -129,7 +129,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，17 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，19 个 Skill 启动仅需约 1400-2800 token</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
 <tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
@@ -151,7 +151,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
-<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，15 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，19 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
 <tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
 </table>
 
@@ -353,6 +353,13 @@ copilot-writing-tools/
 │       ├── 优化句式/                           #     消除英式中文与翻译腔
 │       └── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
 │
+├── ima/                                        # 🌏 IMA 适配层：.copilot 的 23 个技能移植版
+│   ├── <skill-name>/                           #   23 个技能目录（kebab-case，映射见 MIGRATION-GUIDE.md）
+│   ├── packages/                               #   打包上传用 ZIP（每技能一个 + 整合包）
+│   ├── MIGRATION-GUIDE.md                      #   Copilot → IMA 同步流程与映射表
+│   ├── ima-skill开发指南.md                    #   IMA 平台规范
+│   └── ima-skill-Python脚本使用指南.md         #   沙盒与脚本调用
+│
 ├── local-search-mcp-server/                    # 🔌 MCP 搜索服务器
 │   ├── index.js                                #   主程序（路径全由 config.json 提供）
 │   ├── package.json                            #   依赖配置
@@ -363,9 +370,13 @@ copilot-writing-tools/
 │   ├── esrg/                                   # 🖥️ 独立 TUI 知识库搜索（Python Textual）
 │   │   ├── esrg/                               #   应用包
 │   │   └── pyproject.toml                      #   项目配置
+│   ├── sanitize-filename/                      # 🧩 VS Code 扩展：规范化含特殊字符的文件名
+│   │   ├── src/                                #   TypeScript 源码
+│   │   ├── package.json                        #   扩展清单
+│   │   └── CHANGELOG.md                        #   版本记录
 │   └── scripts/                                #   实用脚本
 │       ├── analyze.py                          #   中文文本定量分析引擎（jieba）
-│       └── extract-copilot-logs.ps1            #   提取 Copilot Chat 历史分析
+│       └── extract-copilot-logs.py             #   提取 Copilot Chat 历史分析
 │
 ├── assets/                                     # 🖼️ 共享资源
 │   ├── Big_4_Agent.png                         #   四大 Agent 示意图

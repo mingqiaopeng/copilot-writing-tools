@@ -14,3 +14,7 @@ tools/esrg/bins/
 tools/esrg/build/
 tools/esrg/dist/
 tools/esrg/*.spec
+
+# IMA 打包产物（由 ima/ 下的技能重新生成，不入库）
+ima/packages/*.zip
+ima/packages/*.rar
