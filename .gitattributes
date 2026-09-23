@@ -1,0 +1,5 @@
+# IMA 侧文件一律使用 LF：ZIP 包内换行符必须为 LF、frontmatter 前不得有 BOM
+# （见 ima/MIGRATION-GUIDE.md「打包注册」）
+# 不加此规则时，core.autocrlf=true 会在检出时把 ima/ 下的文件转成 CRLF，
+# 导致从工作区重建的 ZIP 静默带入 CRLF。
+ima/** text eol=lf
