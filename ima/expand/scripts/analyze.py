@@ -4,6 +4,9 @@
 用法:
   python analyze.py <filepath>              # 全量分析
   python analyze.py <filepath> --section    # 分段分析（用于跨章节风格对比）
+
+输入编码：自动识别 UTF-8 / UTF-8-BOM / GB18030，无需手动指定。
+输出：始终为合法 JSON（出错时输出 {"error": ...} 而非 traceback）。
 """
 
 import sys
@@ -69,15 +72,45 @@ CLASSICAL_PARTICLES = set("之其所谓者也矣焉乎耳")
 
 
 def _import_jieba():
-    """延迟导入 jieba，方便检测是否可用"""
-    try:
-        import jieba
-        import jieba.posseg as pseg
-        import jieba.analyse
+    """延迟导入 jieba，方便检测是否可用。模块只导入一次并缓存结果。"""
+    global _JIEBA
+    if _JIEBA is None:
+        try:
+            import jieba
+            import jieba.posseg as pseg
+            import jieba.analyse
 
-        return jieba, pseg, jieba.analyse
-    except ImportError:
-        return None, None, None
+            _JIEBA = (jieba, pseg, jieba.analyse)
+        except ImportError:
+            _JIEBA = (None, None, None)
+    return _JIEBA
+
+
+_JIEBA = None
+
+
+# ============================================================
+# 文件读取（中文文档常见 UTF-8 / GB18030 / UTF-8-BOM，需容错）
+# ============================================================
+
+
+def read_text(filepath):
+    """读取文稿，自动识别编码。
+
+    中文写作场景下 GB18030/GBK 文档极为常见（Windows 记事本、某些老旧导出工具），
+    直接按 UTF-8 打开会抛 UnicodeDecodeError。依次尝试：UTF-8-SIG → UTF-8 →
+    GB18030 → 兜底按 UTF-8 忽略错误字节。
+    """
+    with open(filepath, "rb") as f:
+        raw = f.read()
+    if raw.startswith(b"\xef\xbb\xbf"):
+        return raw[3:].decode("utf-8", errors="replace")
+    for enc in ("utf-8", "gb18030"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
 
 
 # ============================================================
@@ -98,27 +131,37 @@ def strip_frontmatter(text):
 def strip_headings(text):
     """移除标题行
 
-    若文本含 # 开头的行（Markdown），用 # 标识符识别标题。
-    否则用「行末无标点 + 字数 ≤22」识别标题。
+    Markdown：按 `#` 标识符识别。
+    纯文本：仅当**整篇**都呈标题特征时才启用启发式（多数行 ≤22 字且行末无标点），
+    否则按正文处理——否则无标点的对话体、诗行、清单会被大面积误删，
+    而被误删的短句恰恰是 burstiness（句长波动）指标要测量的对象。
     """
     lines = text.split("\n")
     has_md_heading = any(re.match(r"^#{1,6}\s", l.strip()) for l in lines)
-
     if has_md_heading:
         return "\n".join(
             l for l in lines if not re.match(r"^#{1,6}\s", l.strip())
         )
 
-    # 纯文本模式：行末无标点且行字数≤22 → 视为标题
+    # 纯文本模式：必须「几乎每一行」都像标题才认定全文是标题结构
     punct_end = re.compile(r"[。！？，、；：…….!?,;:]$")
+    non_empty = [l.strip() for l in lines if l.strip()]
+    if not non_empty:
+        return text
+    heading_like = sum(
+        1 for l in non_empty
+        if not punct_end.search(l[-1]) and count_chars(l) <= 22
+    )
+    if heading_like / len(non_empty) < 0.9:
+        return text  # 绝大多数行是正文 → 不做剔除
+
     result = []
     for l in lines:
         stripped = l.strip()
         if not stripped:
             result.append(l)
             continue
-        last_char = stripped[-1]
-        if not punct_end.search(last_char) and count_chars(stripped) <= 22:
+        if not punct_end.search(stripped[-1]) and count_chars(stripped) <= 22:
             continue  # 视为标题，跳过
         result.append(l)
     return "\n".join(result)
@@ -194,8 +237,9 @@ def get_pos_stats(text):
     words = list(pseg.cut(text))
     meaningful = [w for w in words if len(w.word.strip()) >= 1]
     total = len(meaningful)
-    adj_count = len([w for w in meaningful if w.flag in ("a", "ad", "an")])
-    adv_count = len([w for w in meaningful if w.flag == "d"])
+    # 形容词口径与 get_pos_distribution 保持一致：a / ad / an / ag
+    adj_count = len([w for w in meaningful if w.flag.startswith("a")])
+    adv_count = len([w for w in meaningful if w.flag.startswith("d")])
     return {
         "totalWords": total,
         "adjCount": adj_count,
@@ -354,24 +398,31 @@ def get_chengyu_stats(text):
         return {"densityPerK": 0, "totalCount": 0, "topPhrases": [], "totalWords": 0}
 
     quad_words = [w for w in words if len(w) == 4]
-    # 尝试区分：在 jieba 词典中的四字词通常是成语或固定搭配
-    # jieba 有 get_dict_file() 但不可靠，改用 FREQ 属性检查
+    # 尝试区分：在 jieba 词典中的四字词通常是成语或固定搭配。
+    # jieba.get_FREQ 是内部 API（无稳定性保证），不可用时全部归为 not_in_dict。
     in_dict = []
     not_in_dict = []
-    for w in quad_words:
-        # jieba 内部词频表：高频四字词通常是成语/固定搭配
-        freq = jieba.get_FREQ(w)
-        if freq is not None:
-            in_dict.append(w)
-        else:
-            not_in_dict.append(w)
+    get_freq = getattr(jieba, "get_FREQ", None)
+    if get_freq is None:
+        not_in_dict = list(quad_words)
+    else:
+        for w in quad_words:
+            try:
+                freq = get_freq(w)
+            except Exception:
+                freq = None
+            if freq is not None:
+                in_dict.append(w)
+            else:
+                not_in_dict.append(w)
 
+    in_dict_set = set(in_dict)
     total_words = len(words)
     density = round(len(quad_words) / total_words * 1000, 1) if total_words > 0 else 0
 
     # Top 四字格（按出现频率，合并 in-dict 和 not-in-dict）
     all_counter = Counter(quad_words)
-    top_all = [{"phrase": w, "count": c, "inDict": w in set(in_dict)}
+    top_all = [{"phrase": w, "count": c, "inDict": w in in_dict_set}
                for w, c in all_counter.most_common(10)]
 
     return {
@@ -458,8 +509,7 @@ def _avg_punct_sent_len(text):
 
 
 def analyze(filepath):
-    with open(filepath, "r", encoding="utf-8") as f:
-        raw = f.read()
+    raw = read_text(filepath)
 
     body = strip_frontmatter(raw)
     body_no_headings = strip_headings(body)
@@ -567,9 +617,7 @@ def analyze(filepath):
 
 def analyze_sections(filepath):
     """分段分析模式 — 返回逐段风格特征"""
-    with open(filepath, "r", encoding="utf-8") as f:
-        raw = f.read()
-    body = strip_frontmatter(raw)
+    body = strip_frontmatter(read_text(filepath))
     paragraphs = get_paragraphs(body)
     return {
         "paragraphCount": len(paragraphs),
@@ -582,13 +630,13 @@ def analyze_sections(filepath):
 # CLI
 # ============================================================
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) < 2:
         print(json.dumps(
             {"error": "Usage: python analyze.py <filepath> [--section]"},
             ensure_ascii=False,
         ))
-        sys.exit(1)
+        return 1
 
     filepath = sys.argv[1]
     if not os.path.exists(filepath):
@@ -596,11 +644,27 @@ if __name__ == "__main__":
             {"error": f"File not found: {filepath}"},
             ensure_ascii=False,
         ))
-        sys.exit(1)
+        return 1
 
-    if "--section" in sys.argv:
-        result = analyze_sections(filepath)
-    else:
-        result = analyze(filepath)
+    try:
+        if "--section" in sys.argv:
+            result = analyze_sections(filepath)
+        else:
+            result = analyze(filepath)
+    except Exception as e:
+        # 始终输出合法 JSON：调用方（Skill）会把 stdout 直接当 JSON 解析，
+        # 裸 traceback 会污染输出并让上层无法给出可读报错。
+        print(json.dumps(
+            {"error": f"{type(e).__name__}: {e}",
+             "file": filepath,
+             "hint": "确认文件可读、为文本文件，且已安装 jieba（pip install jieba）"},
+            ensure_ascii=False,
+        ))
+        return 1
 
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

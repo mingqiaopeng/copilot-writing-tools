@@ -14,27 +14,43 @@ function getConfig(): vscode.WorkspaceConfiguration {
 }
 
 /**
- * 将简单 glob 模式转换为正则表达式
+ * 将 glob 模式转换为正则表达式
  * 支持 **、*、? 三种通配符
+ *
+ * 注意：转义时**不能**先把 * 和 ? 转义掉——它们是 glob 通配符，
+ * 需要在转义步骤之后再被替换成对应的正则片段。顺序：先转义正则元字符
+ * （用占位符保护 * ?），再逐个替换通配符。
  */
 function globToRegex(pattern: string): RegExp {
     const escaped = pattern
-        .replace(/[.+^${}()|[\]\\]/g, '\\$&')   // 先转义正则特殊字符
-        .replace(/\\\*\\\*/g, '<<<DOUBLESTAR>>>') // 暂存 **
-        .replace(/\\\*/g, '[^/\\\\]*')             // * → 匹配非路径分隔符
-        .replace(/<<<DOUBLESTAR>>>/g, '.*')        // ** → 匹配任意
-        .replace(/\\\?/g, '[^/\\\\]');             // ? → 匹配单个非路径分隔符
-    return new RegExp(escaped);
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')   // 先转义正则元字符（不含 * ?）
+        .replace(/\*/g, '<<<STAR>>>')           // 暂存 *
+        .replace(/\?/g, '<<<QMARK>>>')         // 暂存 ?
+        .replace(/<<<\*\*\*>>>/g, '<<<DOUBLESTAR>>>');  // ** 先于 * 还原
+    // 还原通配符
+    const withWildcards = escaped
+        .replace(/<<<DOUBLESTAR>>>/g, '.*')     // ** → 匹配任意（含分隔符）
+        .replace(/<<<STAR>>>/g, '[^/\\\\]*')    // *  → 匹配非路径分隔符
+        .replace(/<<<QMARK>>>/g, '[^/\\\\]');   // ?  → 匹配单个非路径分隔符
+    return new RegExp(withWildcards);
 }
 
 /**
  * 检查路径是否在忽略列表中
+ * 单条 pattern 非法时跳过该条并记日志，不让整个检测流程崩溃
  */
 function isIgnored(filePath: string): boolean {
     const config = getConfig();
     const ignoredPatterns: string[] = config.get('ignoredPatterns') || [];
 
-    return ignoredPatterns.some(pattern => globToRegex(pattern).test(filePath));
+    return ignoredPatterns.some(pattern => {
+        try {
+            return globToRegex(pattern).test(filePath);
+        } catch (e) {
+            console.error('[Sanitize Filename] Invalid ignoredPattern "' + pattern + '":', e);
+            return false;
+        }
+    });
 }
 
 /**
@@ -342,14 +358,17 @@ async function scanProblematicFiles(): Promise<vscode.Uri[]> {
 
     const config = getConfig();
     const ignoredPatterns: string[] = config.get('ignoredPatterns') || [];
-    // 构建 findFiles 的排除模式（追加到默认排除）
-    const excludePattern = '{' + ignoredPatterns.join(',') + '}';
+    // 构建 findFiles 的排除模式（追加到默认排除）。忽略列表为空时不要拼出
+    // 非法的 '{}'，那会让 findFiles 抛错。
+    const excludePattern = ignoredPatterns.length > 0
+        ? '**/node_modules/**,**/.git/**,{' + ignoredPatterns.join(',') + '}'
+        : '**/node_modules/**,**/.git/**';
 
     const allFiles: vscode.Uri[] = [];
     for (const folder of vscode.workspace.workspaceFolders) {
         const uris = await vscode.workspace.findFiles(
             new vscode.RelativePattern(folder, '**/*'),
-            '{**/node_modules/**,**/.git/**,' + excludePattern + '}'
+            excludePattern
         );
         allFiles.push(...uris);
     }

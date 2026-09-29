@@ -291,3 +291,44 @@ description: 多维度量化分析。调用分析脚本获取定量数据，结�
 - 风格词从词库选，不自由发挥
 - 显著不足只描述问题，不写修改建议
 - 若 jieba 未安装导致 adjAdvMethod 为 "jieba-unavailable"，在对话展示中标注"形副比率（jieba 未安装，AI 估算）"并给出估算值；同理，lexicalDiversity / formalRatio / textrankKeywords / tfidfKeywords 为 null 时标注"jieba 未安装，不可用"
+
+## 工作流示例
+
+**示例 1：标准全文量化分析**
+
+用户说"给这篇文章打个分"：
+
+1. `file_read` 读取全文，确认是中文非虚构长文（文体影响解读口径）
+2. 运行 `python3 /sandbox/workspace/skills/stats/scripts/analyze.py "<filepath>"` 取定量数据
+3. AI 定性判断：按 5 维量规（思想性 30% / 逻辑性 20% / 内容充实度 25% / 流畅度 15% / 艺术性 10%）逐维打分，评语须结合文章具体内容，不照抄锚点
+4. 组装完整 JSON：`meta` / `basicData` / `scores` / `quantitative` / `quantitativeDisplay`
+5. 写入 `<源文件名>.<YYYYMMDDHHmm>.analysis.json`（与源文件同目录）
+6. 按「对话展示格式」逐字输出三节表格；**JSON 中的分数与表格必须完全一致**
+
+**示例 2：只对选中的段落打分**
+
+用户选中第 3-5 段说"分析一下这几段"：
+
+1. 判定操作范围 = 选中部分（`file_read` 定位到选区）
+2. 脚本只能分析整文件 → **以选区内容为准做判断**，`totalChars` 等取全文值但在展示中注明"全文 X 字，评分针对选中的 N 字"
+3. 只对这 3 段打分，不外推至全文
+4. `quantitativeDisplay` 中不适用的指标（如需要全文对比的段落相似度）标注"选区模式不适用"
+
+**示例 3：jieba 未安装**
+
+运行环境缺 jieba：
+
+1. 脚本正常返回，但 `adjAdvMethod` = `"jieba-unavailable"`，`lexicalDiversity` / `formalRatio` / `tfidfKeywords` 为 `null`
+2. **不因此中止**——其余指标（字数、句长、段长、虚词比率、感情标点比率）仍有效
+3. 在展示中逐项标注："形副比率（jieba 未安装，AI 估算）"、词汇多样性一栏写"jieba 未安装，不可用"
+4. 提示用户执行 `pip install jieba` 后可获得完整指标
+5. JSON 中如实保留 `null`，**不用 0 或估值填充**——0 会被误读为"该指标为 0"
+
+**示例 4：短文（<500 字）**
+
+用户对一段 300 字的说明文要求评分：
+
+1. 样本量过小，句长标准差、词汇多样性等统计量不稳定
+2. 仍然执行并输出，但在「量化指标」表下加一行说明："篇幅较短（300 字），节奏类指标参考价值有限，评分以内容维度为主"
+3. 艺术性维度谨慎给分——300 字无法判断作者的语言风格
+4. 不因"样本不足"拒绝执行，但**不虚报精度**

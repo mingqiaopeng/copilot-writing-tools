@@ -39,6 +39,12 @@ $Skills = @(
     "请说人话"
 )
 
+# 附属资源（L3）：SKILL.md 中会以相对路径显式引用，缺失则技能残废。
+# 新增带 references/ 的技能时必须在此登记，否则一键安装会漏装。
+$SkillResources = @{
+    "请说人话" = @("references/checklist.md", "references/scoring.md")
+}
+
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host "  中文文稿写作 Agent 工具集 一键安装" -ForegroundColor Cyan
@@ -102,6 +108,27 @@ foreach ($name in $Skills) {
         Write-Host "  [OK] $name/SKILL.md" -ForegroundColor Green
     } catch {
         Write-Host "  [FAIL] $name — $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# ── 下载附属资源（SKILL.md 的 references/ 等 L3 资源）──
+if ($SkillResources.Count -gt 0) {
+    Write-Host ""
+    Write-Host "[Copilot] 附属资源 (references/ 等)" -ForegroundColor Yellow
+    foreach ($name in $SkillResources.Keys) {
+        $base = "$CopilotDir\skills\$name"
+        foreach ($rel in $SkillResources[$name]) {
+            $url  = "$BaseUrl/.copilot/skills/$name/$rel"
+            $dest = Join-Path $base $rel
+            $null = New-Item -ItemType Directory -Force -Path (Split-Path $dest -Parent)
+            Write-Host "  $url" -ForegroundColor Gray
+            try {
+                Invoke-WebRequest -Uri $url -OutFile $dest -ErrorAction Stop | Out-Null
+                Write-Host "  [OK] $name/$rel" -ForegroundColor Green
+            } catch {
+                Write-Host "  [FAIL] $name/$rel — $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
     }
 }
 
@@ -254,6 +281,7 @@ Write-Host ""
 Write-Host "Copilot 端已部署到: $CopilotDir"
 Write-Host "  agents/                          ($($Agents.Count) 个 Agent)"
 Write-Host "  skills/                          ($($Skills.Count) 个 Skill)"
+Write-Host "  skills/*/references/             ($($SkillResources.Count) 个技能的附属规则集)"
 Write-Host "  local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）"
 Write-Host "  MCP 配置已合并至 %APPDATA%\Code\User\mcp.json"
 Write-Host ""

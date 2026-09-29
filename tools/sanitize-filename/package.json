@@ -2,7 +2,7 @@
   "name": "sanitize-filename",
   "displayName": "Sanitize Filename",
   "description": "自动检测并规范化包含特殊字符的文件名，解决 Copilot 等工具因文件名特殊字符导致的问题",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "publisher": "custom",
   "engines": {
     "vscode": "^1.74.0"

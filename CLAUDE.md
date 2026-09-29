@@ -29,7 +29,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **改仓库文件不会生效。** Skill 内部以**安装后的绝对路径**调用脚本与资源——例如 `.copilot/skills/量化分析/SKILL.md` 里写的是 `python "~/.copilot/tools/scripts/analyze.py" "<文件>"`。改完 `.copilot/` 下的文件必须**重新部署 + 重启 VS Code**（Agent/Skill 仅在启动时扫描加载）。直接改仓库文件不会影响已安装的副本。
 2. **新增 Skill 必须手工同步 `install` 脚本。** `install`（PowerShell）中的 `$Agents` / `$Skills` 是**硬编码数组**；`local_install.bat` 遍历目录，会自动跟上。只加目录不改 `install`，一键安装会静默漏装。
-3. **README 与本文件中的数量、目录清单属于手工维护的冗余信息**，改动 Skill/Agent 时需一并核对，否则会腐烂（历史上已多次发生）。
+3. **README 与本文件中的数量、目录清单属于手工维护的冗余信息**，改动 Skill/Agent 时需一并核对，否则会腐烂（历史上已多次发生）。**跑 `python tools/check.py` 可一次性校验这类约束**（数量、映射表、IMA 平台规范、脚本副本、MCP 工具名），提交前必跑。
+4. **新增带 `references/` 的 Skill 必须同步四处部署路径**：`install`（`$SkillResources` 映射表）、`local_install.bat`（xcopy 段）、以及个人同步脚本 `.claude/sync.ps1` / `sync_workspace.ps1`。只拷 `SKILL.md` 会让技能装完即残废——SKILL.md 里对 `references/*.md` 的引用全部落空。
 
 ### 交付面二：`ima/` → ima.copilot（腾讯）
 
@@ -96,7 +97,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 其他目录
 
-- `local-search-mcp-server/` — Node.js MCP 服务器，为 Copilot 侧的档案员与「神来之笔」提供搜索后端。提供 4 个工具：`search_files`（es.exe）、`search_content_rg`（ripgrep）、`search_content_ps`（Select-String，rg 缺失时兜底）、`search_rhetoric`（修辞句子库）。**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**；`config.json` 不入库，模板为 `config.example.json`。前置依赖 Everything（`es.exe` 在 PATH）与 ripgrep。
+- `local-search-mcp-server/` — Node.js MCP 服务器，为 Copilot 侧的档案员与「神来之笔」提供搜索后端。提供 4 个工具：`search_files`（es.exe 文件名搜索）、`search_content_es`（es.exe `content:` 全库内容搜索）、`search_content_rg`（ripgrep 精确搜索，**rg 缺失时内部回退到 PowerShell Select-String**，不是独立工具）、`search_rhetoric`（修辞句子库）。**所有路径由服务器自身的 `config.json` 提供，代码不做任何路径推测**；`config.json` 不入库，模板为 `config.example.json`。前置依赖 Everything（`es.exe` 在 PATH）与 ripgrep。
 - `tools/sanitize-filename/` — **独立的 VS Code 扩展**（TypeScript）。自动检测并规范化含特殊字符的文件名，解决 Copilot 因文件名特殊字符而失效的问题。有自己的 `package.json` / `CHANGELOG.md` / `package.nls*.json`（中英文菜单适配）。
 - `tools/esrg/` — Python Textual 编写的独立 TUI 知识库搜索工具（Everything 文件名搜索 + ripgrep 内容搜索），不依赖 VS Code。构建脚本会自动下载 `es.exe` / `ripgrep` 到 `bins/`。
 - `tools/scripts/analyze.py` — 中文文本定量分析引擎（jieba），被 Copilot 侧「量化分析」Skill 调用。仓库内仅此一份，但 **Skill 调用的是安装后的副本**。
@@ -106,6 +107,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Commands
 
 ```bash
+# 一致性校验（提交前必跑）——校验数量、映射表、IMA 平台规范、脚本副本、
+# 文档中的 MCP 工具名是否与实现一致。退出码 0 = 全通过。
+python tools/check.py
+python tools/check.py --quiet   # 只显示失败项
+
 # 部署到 Copilot 全局（~/.copilot/）
 #   local_install.bat 末尾有 pause，供双击交互执行；同时完成 npm install 与 mcp.json 合并
 cmd /c local_install.bat
@@ -141,7 +147,7 @@ bash build.sh                     # 上述步骤的封装
 
 ### 修改前确认
 
-- 等待确认：**标题优化 / 段落重组 / 大纲生成**——先出方案，用户确认后才改文件
+- 等待确认：**标题优化 / 段落重组 / 大纲生成 / 传达提纲**——先出方案，用户确认后才改文件（「传达提纲」为**先呈现提纲、再确认写入**，提纲是删减后的浓缩版本，覆盖原文不可逆）
 - 直接修改：其余所有 Skill（「请说人话」为分层机制——强 AI 味自动去除，弱 AI 味编号征询后修改）
 
 ### 文件结构约定
@@ -200,9 +206,11 @@ SKILL.md 中引用 Agent 时统一写「其他 Agent」，**不点名**具体 Ag
 
 1. 创建 `.copilot/skills/<技能名>/SKILL.md`，按上述「文件结构约定」编写（`当前角色` / `操作范围规则` / `编辑策略（铁律）` 三节必含）
 2. **把技能名加进 `install` 的 `$Skills` 数组**（否则一键安装漏装）
-3. 在 `ima/` 建立对应 Skill，按上述 IMA 平台差异改写，并重新打包 ZIP
-4. 检查是否有 Agent 应在诊断后推荐该 Skill，更新其「注意事项」推荐列表
-5. 核对 README 与本文件中的 Skill 数量与清单
+3. 若技能带 `references/` 等附属资源，登记进 `install` 的 `$SkillResources` 映射表（否则 SKILL.md 对附属文件的引用落空）
+4. 在 `ima/` 建立对应 Skill，按上述 IMA 平台差异改写，并重新打包 ZIP
+5. 检查是否有 Agent 应在诊断后推荐该 Skill，更新其「注意事项」推荐列表
+6. 核对 README 与本文件中的 Skill 数量与清单
+7. **跑 `python tools/check.py` 确认全绿**
 
 ### 新增 Agent
 

@@ -43,9 +43,11 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
 
 > [!TIP]
-> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署所有内容至两端。
+> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署 Copilot 端全部内容（Agent、20 个 Skill 及其 `references/` 附属规则集、量化分析引擎、MCP 服务器）至 `~/.copilot/`。
 >
-> 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 目录复制到 `~/.copilot/`（全局生效）。
+> 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 整个目录复制到 `~/.copilot/`（全局生效）。
+>
+> 🌏 **IMA 端另行部署**：腾讯 ima.copilot 侧的 24 个 Skill 以 ZIP 形式分发，需单独上传，详见 [「IMA 端（腾讯 ima.copilot）」](#-ima-端腾讯-imacopilot)。
 
 > [!IMPORTANT]
 > ## ⚠️ 本项目不包含"生成"功能
@@ -140,7 +142,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>20 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>20 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
@@ -286,12 +288,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **标题优化** | 优化标题、改个标题 | 提供 3-5 个备选标题供选择 |
 | **段落重组** | 调整段落顺序、重组段落 | 分析逻辑后提出重组方案 |
 | **大纲生成** | 生成大纲、写个大纲 | 提供 2-3 种结构方案供选择 |
-
-### 📄 输出结果（不修改原文）
-
-| Skill | 触发词 | 功能 |
-|-------|--------|------|
-| **传达提纲** | 传达提纲、提炼提纲、摘编 | 对政论文章结构化提取，输出内部传达提纲 |
+| **传达提纲** | 传达提纲、提炼提纲、摘编 | 对政论文章结构化提取提纲，先呈现，确认后写入文件 |
 
 ---
 
@@ -323,6 +320,54 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 🧍 去 AI 味（请说人话）
 📄 转换成纯文本（去除标签）
 ```
+
+---
+
+## 🌏 IMA 端（腾讯 ima.copilot）
+
+同一套能力在腾讯 [ima.copilot](https://ima.qq.com/) 上以 **24 个 Skill** 的形式提供——IMA 侧不区分 Agent 与 Skill，因此 Copilot 侧的 4 个 Agent 在 IMA 侧同样落为 Skill，合计 20 + 4 = 24 个，功能一一对应。
+
+### 安装
+
+1. 从 [`ima/packages/`](ima/packages/) 取打包产物（二进制产物不入库，需本地生成——见下方「自行打包」）：
+   - `IMA中文写作技能包.rar` — 整合包，内含 24 个 per-skill ZIP + 使用说明，**推荐一次性上传**
+   - `<skill-name>.zip` — 单个技能包，可单独覆盖更新
+2. 在 IMA 对话中上传 ZIP 即可注册；上传同名 ZIP 可更新已有技能。
+3. 新建对话后生效。
+
+### 与 Copilot 端的差异
+
+| 维度 | Copilot 端 | IMA 端 |
+|------|-----------|--------|
+| 技能数 | 4 Agent + 20 Skill | 24 Skill（Agent 与 Skill 不分） |
+| 名称 | 中文名 | kebab-case 英文名（`请说人话` → `de-ai`） |
+| 编辑约束 | 各 Skill 含「编辑策略（铁律）」 | 不含——IMA 编辑走平台自身约定 |
+| 脚本调用 | `~/.copilot/tools/scripts/` | `/sandbox/workspace/skills/<name>/scripts/`（不支持跨技能共享，需逐份内置） |
+| 风格档案 | 内置 4 套 JSON 风格档案 | 不内置——风格来源为用户上传的参考文件 / 知识库文章 / 文本样本 |
+
+> [!NOTE]
+> `ima/` 是**派生层**——改动 Copilot 侧后须同步改写 IMA 侧。完整映射表、同步流程与打包规范见 [`ima/MIGRATION-GUIDE.md`](ima/MIGRATION-GUIDE.md)；面向使用者的说明见 [`ima/packages/中文写作技能包使用说明.md`](ima/packages/中文写作技能包使用说明.md)。
+
+<details>
+<summary><b>自行打包（开发者）</b></summary>
+
+```bash
+cd ima
+for d in */; do
+    n="${d%/}"
+    [ -f "$n/SKILL.md" ] || continue
+    rm -f "packages/$n.zip"
+    (cd "$n" && zip -r -X "../packages/$n.zip" . -x '.*')
+done
+# 重建整合包（需 WinRAR；7z 只能解不能生成 RAR）
+cd packages && "/c/Program Files/WinRAR/Rar.exe" a -ep1 -y "IMA中文写作技能包.rar" *.zip *.md
+```
+
+> ⚠️ ZIP 文件名 = `name` 字段 = 包内目录名，三者必须一致；包内换行符必须为 **LF**，frontmatter 前**不得有 UTF-8 BOM**（仓库已用 `.gitattributes` 将 `ima/**` 锁定为 LF）。整合包条目数应为 **25**（24 个 ZIP + 1 个说明文档）。
+
+</details>
+
+---
 
 ## 📁 文件结构
 
@@ -379,7 +424,8 @@ copilot-writing-tools/
 │   │   ├── package.json                        #   扩展清单
 │   │   └── CHANGELOG.md                        #   版本记录
 │   └── scripts/                                #   实用脚本
-│       ├── analyze.py                          #   中文文本定量分析引擎（jieba）
+│       ├── analyze.py                          #     中文文本定量分析引擎（jieba）
+│       ├── check.py                            #     一致性校验器（数量/映射/平台规范/脚本副本）
 │       └── extract-copilot-logs.py             #   提取 Copilot Chat 历史分析
 │
 ├── assets/                                     # 🖼️ 共享资源
@@ -454,9 +500,9 @@ MCP 服务器位于仓库根目录的 `local-search-mcp-server/`，配置自持�
 
 | MCP 工具 | 用途 |
 |---------|------|
-| `search_files` | 通过 es.exe 搜索文件名 |
-| `search_content_rg` | 通过 ripgrep 搜索文件内容 |
-| `search_content_ps` | 通过 PowerShell Select-String 搜索（rg 不可用时的备选） |
+| `search_files` | 通过 es.exe 按文件名搜索（仅 *.md） |
+| `search_content_es` | 通过 es.exe `content:` 全库内容搜索（需 Everything 已启用内容索引） |
+| `search_content_rg` | 在指定文件中用 ripgrep 搜索（支持正则，返回上下文）；**rg 未安装时自动回退到 PowerShell Select-String**，无需额外配置 |
 | `search_rhetoric` | 在修辞句子库中按主题和标签搜索匹配金句 |
 
 ### 配置步骤
@@ -568,7 +614,7 @@ Agent Skills 规范的核心设计是**三层渐进加载**，极大降低上下
 | **L2 — 指令** | 完整 `SKILL.md` 正文 | Skill 被激活时（用户的提示词与 description 语义匹配） | 建议 <5000 |
 | **L3 — 资源** | `scripts/`、`references/` 等附属文件 | Skill 显式引用时 | 按需加载 |
 
-> 即使安装 50 个 Skill，启动开销也仅约 2500-5000 token，比传统 system prompt 节省约 **90%** 上下文。
+> 即使安装几十个 Skill，启动开销也仅约 2500-5000 token，比传统 system prompt 节省约 **90%** 上下文。
 
 #### ⚡ 触发机制
 

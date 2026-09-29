@@ -70,6 +70,7 @@
 
 ### 2. 同步数据文件
 
+- **`references/` 规则集**：`.copilot/skills/<技能名>/references/*.md` → `ima/<skill-name>/references/`（内容基本一致，仅需把「本文件是「X」技能」等自称按 IMA 侧技能名调整）。SKILL.md 中以相对路径引用，**必须同步，否则技能残废**
 - **好词好句.jsonl**：从 `F:\文档资料库\` 复制到 `ima/golden-phrase/assets/good-sentences.jsonl`
 - **风格 JSON 不迁移**：`.copilot/skills/统一风格/*.json` 是 Copilot 侧的内置风格档案（用于「指定风格改写」）。IMA 侧不内置风格档案，风格来源改由用户提供——上传的参考文件、知识库文章或文本样本，因此既不复制这些 JSON，也不在 `ima/style/` 下新建 `references/`
 
@@ -89,14 +90,25 @@
 
 **① 更新技能 ZIP（产出物存放于 `ima/packages/`）**
 
+用仓库自带的 `ima/rebuild_packages.py` 一键重建全部 per-skill ZIP（不依赖 zip 命令行，跨平台）：
+
+```bash
+python ima/rebuild_packages.py
+```
+
+脚本逐包校验三约束：**包内条目以 `<name>/` 开头、无 CRLF、无 BOM**，任一不符即报错退出。
+
 ZIP 文件名 = `<name>.zip`，内部目录结构：
 ```
 <name>.zip
   └── <name>/          ← 必须与 name 字段一致
       ├── SKILL.md
+      ├── references/  (可选，按需加载的长规则集)
       ├── scripts/     (可选)
       └── assets/      (可选)
 ```
+
+> **`references/` 同样需要打包。** SKILL.md 中会以相对路径显式引用 `references/*.md`（「见 `references/checklist.md`」），漏打包会让技能在 IMA 侧只剩核心规则。当前仅 `de-ai` 使用该目录（`checklist.md` 增量句式与阈值表、`scoring.md` 三套评分制）。
 
 在 IMA 对话中上传 ZIP 即可自动注册。覆盖上传同名的 ZIP 可更新已有技能。
 
@@ -110,6 +122,8 @@ ZIP 文件名 = `<name>.zip`，内部目录结构：
 cd ima/packages
 "/c/Program Files/WinRAR/Rar.exe" a -ep1 -y "IMA中文写作技能包.rar" *.zip *.md
 ```
+
+> 建议先 `rm -f "IMA中文写作技能包.rar"` 再重建，避免旧条目残留。
 
 - `-ep1` 排除基目录名，保持条目为裸文件名（与既有结构一致）
 - 就地更新已变更的条目，未变更的条目内容保持原样
@@ -139,8 +153,12 @@ cd ima/packages
 - [ ] 脚本路径已修正为 `skills/<name>/scripts/`
 - [ ] MCP 工具调用已替换
 - [ ] 数据文件已同步
+- [ ] `references/` 已随 SKILL.md 一并复制到 IMA 侧
 - [ ] ZIP 文件名 = name 字段 = 内部目录名，三者一致
 - [ ] 文件编码 UTF-8 without BOM，换行符 LF
 - [ ] 无 TODO 占位符残留
+- [ ] 至少 2 个 `工作流示例`
 - [ ] 变更的技能 ZIP 已重新打包到 `ima/packages/`
 - [ ] 整合包 `IMA中文写作技能包.rar` 已重建，且条目数仍为 25
+
+> 上述条目除最后两项外均可由 `python tools/check.py` 自动校验——**提交前先跑一遍**。

@@ -49,6 +49,17 @@ for /d %%d in (".copilot\skills\*") do (
     )
 )
 
+REM ── 复制附属资源（SKILL.md 的 references/ 等 L3 资源）──
+echo.
+echo [Copilot] 附属资源
+for /d %%d in (".copilot\skills\*") do (
+    if exist "%%d\references" (
+        if not exist "%TARGET_DIR%\skills\%%~nxd\references" mkdir "%TARGET_DIR%\skills\%%~nxd\references"
+        xcopy /y /e /i /q "%%d\references" "%TARGET_DIR%\skills\%%~nxd\references\" > nul
+        if errorlevel 1 (echo   [FAIL] %%~nxd\references) else (echo   [OK] %%~nxd\references)
+    )
+)
+
 REM ── 复制风格模板 ──
 echo.
 echo [Copilot] 风格模板
@@ -145,6 +156,9 @@ echo   agents/                          (%AGENT_COUNT% 个 Agent)
 set SKILL_COUNT=0
 for /d %%d in ("%TARGET_DIR%\skills\*") do set /a SKILL_COUNT+=1
 echo   skills/                          (%SKILL_COUNT% 个 Skill)
+if exist "%TARGET_DIR%\skills\请说人话\references" (
+    echo   skills/*/references/         (附属规则集)
+)
 echo   local-search-mcp-server/         MCP 服务器（档案员 + 神来之笔）
 echo   MCP 配置已合并至 %%APPDATA%%\Code\User\mcp.json
 echo.

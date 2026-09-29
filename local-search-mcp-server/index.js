@@ -80,10 +80,14 @@ function spawnDetached(exe, args, label) {
 
 let everythingEnsured = false;
 let everythingReady = false;
+let everythingRetryAfter = 0;
 
 async function ensureEverything() {
-  if (everythingEnsured) return everythingReady;
-  everythingEnsured = true;
+  // 成功则缓存；失败后进入退避期再重试（冷启动时 3s 等待可能不够，
+  // 一旦失败就永久标记会导致整个会话内 es.exe 始终不可用）。
+  if (everythingReady) return true;
+  const now = Date.now();
+  if (everythingEnsured && now < everythingRetryAfter) return false;
 
   // 1) 尝试启动 Everything 托盘程序（detached，fire-and-forget）
   log("尝试启动 Everything 托盘程序...");
@@ -104,23 +108,30 @@ async function ensureEverything() {
     }
   }
   if (!launched) {
-    log("⚠ Everything.exe 启动失败");
+    log("⚠ Everything.exe 启动失败，60 秒后重试");
+    everythingEnsured = true;
+    everythingRetryAfter = now + 60000;
     return false;
   }
 
-  // 2) 等待索引就绪
-  await new Promise(r => setTimeout(r, 3000));
-
-  // 3) 冒烟测试：es.exe 快速搜索验证 IPC 通畅
-  const { text, exitCode } = await spawnRun(esPath, ["ext:md", "-n", "1", "-path", kbRoot], "es冒烟", "gbk");
-  if (exitCode === 0) {
-    log("es.exe 冒烟测试通过，IPC 通畅");
-    everythingReady = true;
-    return true;
+  // 2) 等待索引就绪（最多等 15s，每 3s 探测一次）
+  let exitCode = -1;
+  for (let i = 0; i < 5; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const probe = await spawnRun(esPath, ["ext:md", "-n", "1", "-path", kbRoot], "es冒烟", "gbk");
+    exitCode = probe.exitCode;
+    if (exitCode === 0) {
+      log(`es.exe 冒烟测试通过（第 ${i + 1} 次探测），IPC 通畅`);
+      everythingReady = true;
+      everythingEnsured = true;
+      return true;
+    }
   }
 
   // exitCode 8 = IPC window not found
-  log(`es.exe 冒烟测试失败 exitCode=${exitCode} → ${text}`);
+  log(`es.exe 冒烟测试失败 exitCode=${exitCode}，60 秒后重试`);
+  everythingEnsured = true;
+  everythingRetryAfter = Date.now() + 60000;
   return false;
 }
 
@@ -181,7 +192,21 @@ function isCommandNotFound(text, exitCode) {
   return exitCode === 127 || /not recognized|not found|command not found|ENOENT/i.test(text);
 }
 
-// 去重：1) 排除 ByCatalog/ByDay 路径  2) 路径去掉数字后相同的视为重复
+// 去重：1) 排除 excludePaths 中的路径段  2) 路径去掉数字后相同的视为重复
+//
+// 注意：数字指纹会把「第1章.md / 第2章.md」「2024总结.md / 2025总结.md」这类
+// 同前缀不同编号的文档塌缩成一个，静默丢失检索结果。因此指纹还必须包含扩展名，
+// 且只对**文件名主体**做数字归一（目录中的年份/序号不应参与）。
+function pathFingerprint(p) {
+  const slash = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
+  const dir = slash >= 0 ? p.slice(0, slash) : "";
+  const base = slash >= 0 ? p.slice(slash + 1) : p;
+  const dot = base.lastIndexOf(".");
+  const stem = dot > 0 ? base.slice(0, dot) : base;
+  const ext = dot > 0 ? base.slice(dot).toLowerCase() : "";
+  return `${dir}|${stem.replace(/\d+/g, "#")}|${ext}`;
+}
+
 function deduplicate(rawOutput) {
   if (!rawOutput || !rawOutput.trim()) {
     log(`[去重] 输入为空，返回 []`);
@@ -189,13 +214,16 @@ function deduplicate(rawOutput) {
   }
   const lines = rawOutput.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   log(`[去重] 输入 ${lines.length} 行`);
-  const excludePattern = (config.excludePaths || []).length > 0 ? new RegExp((config.excludePaths || []).map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|")) : null;
+  const excludes = config.excludePaths || [];
+  const excludePattern = excludes.length > 0
+    ? new RegExp(excludes.map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|"))
+    : null;
   const filtered = excludePattern ? lines.filter(p => !excludePattern.test(p)) : lines;
   const dropped1 = lines.length - filtered.length;
-  if (dropped1 > 0) log(`[去重] 路径排除(${config.excludePaths.join(", ")})过滤掉 ${dropped1} 条`);
+  if (dropped1 > 0) log(`[去重] 路径排除(${excludes.join(", ")})过滤掉 ${dropped1} 条`);
   const seen = new Map();
   for (const p of filtered) {
-    const fingerprint = p.replace(/\d+/g, '');
+    const fingerprint = pathFingerprint(p);
     if (!seen.has(fingerprint)) {
       seen.set(fingerprint, p);
     }
@@ -248,7 +276,9 @@ server.tool(
   },
   async ({ query }) => {
     log(`===== search_files  query="${query}" =====`);
-    await ensureEverything();
+    if (!(await ensureEverything())) {
+      return { content: [{ type: "text", text: "Everything 搜索服务未就绪（es.exe 无法连接 Everything IPC）。请确认 Everything 已安装并运行（托盘可见放大镜图标），60 秒后重试。" }] };
+    }
     const args = [...query.split(/\s+/).filter(Boolean), "ext:md", "-path", kbRoot];
     const { text, exitCode } = await spawnRun(esPath, args, "search_files", "gbk");
     if (exitCode !== 0 && !text) {
@@ -271,7 +301,9 @@ server.tool(
   },
   async ({ keyword }) => {
     log(`===== search_content_es  keyword="${keyword}" =====`);
-    await ensureEverything();
+    if (!(await ensureEverything())) {
+      return { content: [{ type: "text", text: "Everything 搜索服务未就绪（es.exe 无法连接 Everything IPC）。请确认 Everything 已安装并运行，60 秒后重试。" }] };
+    }
     // 关键词含空格时需加引号，否则 es.exe 会将其拆分为文件名搜索
     const contentArg = `content:"${keyword}"`;
     const args = ["ext:md", contentArg, "-path", kbRoot];
