@@ -10,8 +10,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 交付面 | 目标平台 | 配置位置 | 形态 |
 |---|---|---|---|
-| VS Code Copilot | GitHub Copilot Chat | `.copilot/` | 4 Agent + 19 Skill |
-| IMA 适配层 | ima.copilot（腾讯） | `ima/` | 23 Skill（4 个 Agent 也落为 Skill） |
+| VS Code Copilot | GitHub Copilot Chat | `.copilot/` | 4 Agent + 20 Skill |
+| IMA 适配层 | ima.copilot（腾讯） | `ima/` | 24 Skill（4 个 Agent 也落为 Skill） |
 
 仓库主体是纯声明式配置——**无构建系统、无测试框架、无 lint**。唯一例外是 `tools/sanitize-filename/`（独立 VS Code 扩展，有 TypeScript 编译）。
 
@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 交付面一：`.copilot/` → VS Code Copilot
 
 - `.copilot/agents/*.agent.md` — 4 个 Agent（点子王 / 批判家 / 分析师 / 档案员）。有独立人格，多轮对话，**绝不修改文件**。
-- `.copilot/skills/<技能名>/SKILL.md` — 19 个 Skill。单次任务，**直接或确认后修改文件**。
+- `.copilot/skills/<技能名>/SKILL.md` — 20 个 Skill。单次任务，**直接或确认后修改文件**。
 - 部署链：`install`（PowerShell，从 GitHub raw 拉取）或 `local_install.bat`（本地）→ `%USERPROFILE%\.copilot\`，对所有项目全局生效。
 
 **⚠️ 三个最容易踩的坑：**
@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 交付面二：`ima/` → ima.copilot（腾讯）
 
-`ima/` 是本工具集在腾讯 ima.copilot 上的**适配层**：把 `.copilot/` 的 4 Agent + 19 Skill 按功能**一一对应**改造为 23 个 IMA Skill（IMA 无 Agent/Skill 之分，故 4 个 Agent 同样落为 Skill——**在 IMA 侧它们同样可以修改文件**，「不修改文件」只是 Copilot 侧 Agent 的约束）。
+`ima/` 是本工具集在腾讯 ima.copilot 上的**适配层**：把 `.copilot/` 的 4 Agent + 20 Skill 按功能**一一对应**改造为 24 个 IMA Skill（IMA 无 Agent/Skill 之分，故 4 个 Agent 同样落为 Skill——**在 IMA 侧它们同样可以修改文件**，「不修改文件」只是 Copilot 侧 Agent 的约束）。
 
 功能映射（IMA 侧为 kebab-case，目录名与 `name` 字段一致）：
 
@@ -48,6 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 标题优化 | `title` | 传达提纲 | `extract` |
 | 段落重组 | `reorder` | 优化句式 | `polish` |
 | 大纲生成 | `outline` | 量化分析 | `stats` |
+| 请说人话 | `de-ai` |
 | 增加过渡 | `transition` | | |
 | 缩减篇幅 | `shorten` | | |
 | 扩充篇幅 | `expand` | | |
@@ -57,7 +58,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **IMA 侧的平台差异（改造时必须遵守）：**
 
 1. **frontmatter 只有 `name` + `description` 两个字段**（无 `tools` / `target`）。`name` 必须 kebab-case、≤64 字符、不能以 `-` 开头结尾或有连续 `--`。`description` 是**单行中文**，固定格式为「做什么 → 触发条件 → 不适用边界」——与 Copilot 侧带 YAML 列表的多行 `description` 写法完全不同。
-2. **正文节名与结构不同**：IMA 侧 23 个 Skill **全部**以 `技能概述` + `操作范围` 开头（对应 Copilot 侧的 `当前角色` + `操作范围规则`），且**不保留 `编辑策略（铁律）` 一节**——那一节针对的是 Copilot 原生编辑工具的限制，IMA 侧编辑走平台自己的工具约定。
+2. **正文节名与结构不同**：IMA 侧 24 个 Skill **全部**以 `技能概述` + `操作范围` 开头（对应 Copilot 侧的 `当前角色` + `操作范围规则`），且**不保留 `编辑策略（铁律）` 一节**——那一节针对的是 Copilot 原生编辑工具的限制，IMA 侧编辑走平台自己的工具约定。
 3. **脚本路径铁律**：IMA **不支持跨技能共享脚本**。脚本必须写成绝对路径 `/sandbox/workspace/skills/<skill-name>/scripts/`，共用的脚本要在每个用到的技能目录下**各存一份副本**。这就是 `expand/` `polish/` `shorten/` `stats/` `style/` 各自带一份 `analyze.py` 的原因——**不要"优化"成共享**。
 4. **资源组织不同**：IMA 侧有 `stats/references/scoring-rubric.md`（Copilot 侧没有），并把修辞句子库落为 `golden-phrase/assets/good-sentences.jsonl`、用 `scripts/search_rhetoric.py` 替代 Copilot 侧的 MCP 工具 `search_rhetoric`。脚本在**本地 Linux 沙盒**（`/sandbox/workspace/`）中由 `shell` 工具调用。
 5. SKILL.md 建议 ≤400 行，超出部分拆入 `references/`；至少 2 个覆盖典型场景的工作流示例；长流程设用户确认门。
@@ -66,11 +67,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **同步铁律**：`ima/` 是**派生层**。修改 `.copilot/skills/<技能名>/SKILL.md` 或 `.copilot/agents/<Agent>.agent.md` 后，**必须**同步改写对应的 `ima/<skill-name>/SKILL.md`。两边的「操作范围 / 执行方式 / 输出格式」逻辑应保持一致，差异只体现在 frontmatter 格式、正文节名、脚本路径写法与资源组织方式上（即上述平台差异）。
 
-`ima/packages/` 存放按技能打包的 ZIP（每个技能一个）与整合包 `IMA中文写作技能包.rar`（内含 23 个 ZIP + `中文写作技能包使用说明.md`，全部为裸文件名）。**改动任一 SKILL.md 后，须重打对应的 per-skill ZIP 并重建整合包**——具体命令与校验要点见 `MIGRATION-GUIDE.md` 的「4. 打包注册」。
+`ima/packages/` 存放按技能打包的 ZIP（每个技能一个）与整合包 `IMA中文写作技能包.rar`（内含 24 个 ZIP + `中文写作技能包使用说明.md`，全部为裸文件名）。**改动任一 SKILL.md 后，须重打对应的 per-skill ZIP 并重建整合包**——具体命令与校验要点见 `MIGRATION-GUIDE.md` 的「4. 打包注册」。
 
 `ima/` 下另有四份人读文档：`ima-skill开发指南.md`（平台规范权威来源）、`MIGRATION-GUIDE.md`（**同步流程与检查清单的权威来源**——逐条列出哪些 Copilot 特有内容要删除、脚本路径怎么改、打包编码要求）、`ima-skill-Python脚本使用指南.md`（沙盒与脚本调用）、`packages/中文写作技能包使用说明.md`（面向使用者）。
 
 > **注意：IMA 侧不内置风格档案。** `.copilot/skills/统一风格/*.json` **不需要也刻意不迁移**到 IMA——IMA 的风格来源是用户上传的参考文件、知识库文章或文本样本（见 `ima/style/SKILL.md`）。因此 `ima/style/` 下没有、也不应新建 `references/`。这是设计决策，不是漏迁，不要"补全"它。
+
+### 请说人话 / de-ai：借鉴来源与设计决策
+
+「请说人话」（IMA 侧 `de-ai`）是「去 AI 味」Skill，由用户提供的《AI 文本滥用句式与结构自查指南》落地，并经开源社区调研充实。维护该 Skill 时需知其规则谱系：
+
+| 来源 | 借鉴内容 | 落点 |
+|------|---------|------|
+| 维基百科 WikiProject AI Cleanup《Signs of AI writing》 | 规则体系的观察基础与实证来源 | 贯穿全部规则 |
+| blader/humanizer | 作者声音保留、「When not to act」、「去痕只是及格线，结果必须仍然像个人」 | 核心判据第 5/6 条 |
+| op7418/Humanizer-zh（2026-09 修订） | 编辑约束与优先级、增量句式 31-44、交付前核对、「模式清单是检查线索不是黑名单」 | 核心判据、`references/checklist.md`、第五步 |
+| petergyang/no-ai-slop | 检测模式（只诊断不改写、不猜作者身份）、与假想敌辩论、伪深度格言、冒号揭晓等 | 句式层 2.10/2.11、checklist 39-44 |
+| Shirhussain/humanize | 反误伤清单（维基百科列明的无效指标）、覆盖度式自证、未填充占位符、过度结构化 | checklist「边界与不可靠信号」 |
+| hardikpandya/stop-slop | 五维评分制（Directness/Rhythm/Trust/Authenticity/Density） | `references/scoring.md` |
+| aplaceforallmystuff/the-antislop | 累加扣分制、星座测试 | `references/scoring.md`（其仓库 SKILL.md 已 404，内容来自公开文档摘要） |
+
+设计决策（改动前须知）：
+- **边界**：欧化句式（层叠的"的"、"进行+动词"、被字句堆叠等 F 组）归「优化句式」，去 AI 味只管模板化痕迹，两者不重叠
+- **检测模式**：用户只问"像不像 AI 写的"时，只报命中模式+引句+改法，不评分、不猜作者身份——"命名模式是可核对的证据，猜作者是 AI 检测器的活"
+- **纪律优先于规则**：核心判据六条（密度判据、先定文体、准确优先于风格、不虚构细节、保留作者声音、线索非黑名单）高于任何单条规则
+- **研究结论**：行业路径已从「规避 AI 检测器」转向「模式识别式改写」（先内建 AI 写作特征清单，再逐条检测、改写或删除），评分驱动迭代正在取代单纯禁词清单
 
 ### 其他目录
 
@@ -127,11 +148,11 @@ bash build.sh                     # 上述步骤的封装
 两者都以 YAML frontmatter 开头，后接 Markdown 正文。`name` 字段、正文首级标题与目录名（Agent 为文件名）三者一致。
 
 - **Agent**（`.agent.md`）：frontmatter 含 `name` / `description` / `tools` / `target`。首节 `角色设定`、末节 `注意事项`，中间必含 `核心原则`（"不修改文件"）与 `输出格式`，其余为各自专属节——如批判家的 `审查维度` / `问题分级标准`、分析师的 `分析维度` / `工作模式`。
-- **Skill**（`SKILL.md`）：frontmatter 含 `name` / `description`（含触发条件关键词）。19 个 Skill **全部**必含 `当前角色` / `操作范围规则` / `编辑策略（铁律）` 三节，通常还有 `执行方式`（或等价的 `工作流程`）与 `输出格式`（量化分析为 `输出 JSON 结构` + `对话展示格式`）。中间可按需增设专属节（`目标设定方式`、`上下文理解`、`风格档案说明` 等）。
+- **Skill**（`SKILL.md`）：frontmatter 含 `name` / `description`（含触发条件关键词）。20 个 Skill **全部**必含 `当前角色` / `操作范围规则` / `编辑策略（铁律）` 三节，通常还有 `执行方式`（或等价的 `工作流程`）与 `输出格式`（量化分析为 `输出 JSON 结构` + `对话展示格式`）。中间可按需增设专属节（`目标设定方式`、`上下文理解`、`风格档案说明` 等）。
 
 ### 编辑策略（铁律）— 所有 Skill 必含
 
-这是贯穿全部 19 个 Skill 的核心约定，每个 Skill 都有一节 `## 编辑策略（铁律）`，内容一致，规定**修改文件前必须完成的检查**：
+这是贯穿全部 20 个 Skill 的核心约定，每个 Skill 都有一节 `## 编辑策略（铁律）`，内容一致，规定**修改文件前必须完成的检查**：
 
 1. **前置检查目标是否已保存**：若编辑对象是未保存的 buffer（`Untitled-*`、无文件路径）→ 立即告知用户"请先保存文件后再执行此操作"，停止执行
 2. **检查文件名**：文件名含特殊字符（`"'(){}[]#&!@$%^*+=~\`<>?|` 或空格）会导致 Copilot 编辑工具失效 → 告知用户先用 **Sanitize Filename** 规范化文件名（界面提示为从 VSIX 安装，即 `tools/sanitize-filename/`）

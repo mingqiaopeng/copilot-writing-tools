@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 19 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
+  <em>4 个 Agent · 20 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
 	  <em>本项目"蒸馏"了开发者 10 年来从事文稿起草工作的近一千个技巧、经验与知识点（其中 Skill 涵盖 744 个、Agent 涵盖 225 个），并将其有机融合到工作流中。</em>
 </p>
 
@@ -129,7 +129,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，19 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，20 个 Skill 启动仅需约 1400-2800 token</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
 <tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
@@ -140,18 +140,18 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>19 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>20 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……<td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
 **核心优势：**
 
 <table width="100%">
-<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，19 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，20 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
-<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，19 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，20 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
 <tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
 </table>
 
@@ -242,6 +242,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | 批判家 | 段落衔接生硬 | 增加过渡 |
 | 批判家 | 文笔平淡、缺乏亮点 | 神来之笔 / 增加修辞 |
 | 批判家 | 英式中文、句式臃肿 | 优化句式 |
+| 批判家 | AI 模板化表达 / AI 腔 | 请说人话（系统性去 AI 味） |
 | 批判家 | 风格与目标刊物不匹配 | 统一风格（指定风格改写） |
 | 批判家 | 跨章节风格不统一 | 统一风格（自动检测统一） |
 | 分析师 | 段落顺序不合理 | 段落重组 |
@@ -276,6 +277,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **优化句式** | 优化句式、英式中文、消除翻译腔 | 诊断英式中文，消除名词化、长定语、"被"字句等 10 类问题 |
 | **统一风格** | 统一风格、风格统一、换个风格、风格转换、改成XX风格 | 统一文稿各部分风格：指定风格改写 / 自动检测统一 / 以指定段落为基准 |
 | **量化分析** | 量化分析、量化评估、量化数据分析、给这篇文章打分 | 多维度量化分析 + AI 评分，输出标准化 JSON 报告（依赖 jieba） |
+| **请说人话** | 请说人话、说人话、去AI味、去AI腔、humanize、像AI写的 | 检测并清除 AI 味：AI 高频词、模板化句式、结构套路与机械节奏，改得有人味 |
 
 ### ✅ 确认后修改（先建议，确认后改）
 
@@ -310,7 +312,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 ### 写作后（审核阶段）
 
 ```
-📊 结构分析（分析师） → 🔍 挑毛病（批判家） → 📋 校对勘误 → 🎯 写中心句 → 📝 生成摘要
+📊 结构分析（分析师） → 🔍 挑毛病（批判家） → 🧍 去 AI 味（请说人话） → 📋 校对勘误 → 🎯 写中心句 → 📝 生成摘要
 ```
 
 ### 专项调整
@@ -318,6 +320,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 ```
 📏 缩减篇幅 / 扩充篇幅
 🎨 神来之笔（金句嵌入）/ 简化修辞 / 增加修辞
+🧍 去 AI 味（请说人话）
 📄 转换成纯文本（去除标签）
 ```
 
@@ -332,7 +335,7 @@ copilot-writing-tools/
 │   │   ├── 批判家.agent.md                     #     严苛文稿审核专家
 │   │   ├── 分析师.agent.md                     #     文稿结构与逻辑分析专家
 │   │   └── 档案员.agent.md                     #     知识库检索专家
-│   └── skills/                                 # 🔧 Skill 包（19 个）
+│   └── skills/                                 # 🔧 Skill 包（20 个）
 │       ├── 写中心句/                           #     提炼段落中心句
 │       ├── 摘要生成/                           #     文章摘要生成
 │       ├── 标题优化/                           #     标题创作优化
@@ -351,10 +354,11 @@ copilot-writing-tools/
 │       ├── 统一风格/                           #     统一文稿各部分风格
 │       ├── 传达提纲/                           #     政论文章结构化摘要提取
 │       ├── 优化句式/                           #     消除英式中文与翻译腔
-│       └── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
+│       ├── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
+│       └── 请说人话/                           #     去 AI 味：AI 高频词/句式/结构/节奏四层检测改写
 │
-├── ima/                                        # 🌏 IMA 适配层：.copilot 的 23 个技能移植版
-│   ├── <skill-name>/                           #   23 个技能目录（kebab-case，映射见 MIGRATION-GUIDE.md）
+├── ima/                                        # 🌏 IMA 适配层：.copilot 的 24 个技能移植版
+│   ├── <skill-name>/                           #   24 个技能目录（kebab-case，映射见 MIGRATION-GUIDE.md）
 │   ├── packages/                               #   打包上传用 ZIP（每技能一个 + 整合包）
 │   ├── MIGRATION-GUIDE.md                      #   Copilot → IMA 同步流程与映射表
 │   ├── ima-skill开发指南.md                    #   IMA 平台规范
@@ -399,6 +403,20 @@ copilot-writing-tools/
 - [Agent Skills 规范](https://agentskills.io/specification) — 由 Anthropic 发起的开放标准（2025.12）
 - [VS Code 自定义 Agent 文档](https://code.visualstudio.com/docs/copilot/custom-agents) — 官方使用指南
 - [skills.sh](https://skills.sh) — 社区 Skill 市场
+
+## 🙏 致谢
+
+「请说人话」Skill（IMA 侧 de-ai）的规则体系借鉴了以下开源社区的去 AI 味项目，谨此致谢：
+
+| 项目 | 借鉴内容 |
+|------|---------|
+| [维基百科 WikiProject AI Cleanup《Signs of AI writing》](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing) | 规则体系的观察基础与实证来源 |
+| [blader/humanizer](https://github.com/blader/humanizer) | 作者声音保留、「去痕只是及格线，结果必须仍然像个人」 |
+| [op7418/Humanizer-zh](https://github.com/op7418/Humanizer-zh) | 编辑约束与优先级、中文增量句式、交付前核对 |
+| [petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop) | 检测模式与编辑原则（"命名模式是可核对的证据"） |
+| [Shirhussain/humanize](https://github.com/Shirhussain/humanize) | 文体裁量、反误伤清单（无效信号） |
+| [hardikpandya/stop-slop](https://github.com/hardikpandya/stop-slop) | 五维评分制 |
+| [aplaceforallmystuff/the-antislop](https://github.com/aplaceforallmystuff/the-antislop) | 累加扣分制、星座测试 |
 
 ## 🎯 使用建议
 
