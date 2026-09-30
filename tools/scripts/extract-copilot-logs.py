@@ -22,11 +22,11 @@ from pathlib import Path
 PROJECT_KEYWORDS = [
     # Agent 名称
     '批判家', '分析师', '点子王', '档案员',
-    # Skill 名称
+    # Skill 名称（须与 .copilot/skills/ 目录保持一致，缺一个就漏一批会话）
     '优化句式', '校对勘误', '写中心句', '摘要生成', '标题优化',
     '段落重组', '大纲生成', '增加过渡', '缩减篇幅', '扩充篇幅',
     '合并段落', '拆分段落', '简化修辞', '神来之笔', '增加修辞',
-    '去除标签', '统一风格', '传达提纲',
+    '去除标签', '统一风格', '传达提纲', '量化分析', '请说人话',
     # Agent 触发词
     '批判性审核', '批判审核', '挑毛病', '找问题', '严格审核',
     '严厉审核', '审稿', '审一下', '有什么问题', '哪里不好',
@@ -40,6 +40,21 @@ PROJECT_KEYWORDS = [
     # 通用
     '按勘误表修改', '勘误表', '什么毛病',
 ]
+
+
+def _warn_if_keyword_drift():
+    """Skill 目录新增后若忘记同步到 PROJECT_KEYWORDS，这里会提示。"""
+    repo_root = Path(__file__).resolve().parents[2]
+    skills_dir = repo_root / '.copilot' / 'skills'
+    if not skills_dir.is_dir():
+        return
+    on_disk = {d for d in os.listdir(skills_dir)
+               if (skills_dir / d / 'SKILL.md').is_file()}
+    missing = sorted(on_disk - set(PROJECT_KEYWORDS))
+    if missing:
+        print('⚠ 以下 Skill 尚未加入 PROJECT_KEYWORDS，相关会话会被漏掉：')
+        for m in missing:
+            print(f'    {m}')
 
 
 # ── 路径 ──
@@ -325,6 +340,7 @@ def main():
         return
 
     # ── 扫描 ──
+    _warn_if_keyword_drift()
     print("正在扫描 Copilot Chat 历史...")
     sessions = find_jsonl_sessions(STORAGE_ROOTS)
 

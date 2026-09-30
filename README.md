@@ -131,7 +131,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，20 个 Skill 启动仅需约 1400-2800 token</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，20 个 Skill + 4 个 Agent 全部 description 合计约 4700 token（启动即加载）</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
 <tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
@@ -153,7 +153,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
-<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载，20 个 Skill 启动约 1400-2800 token，比传统方案节省约 90%</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载——会话启动只加载每个技能的 <code>name</code> + <code>description</code>（约 4700 token），完整正文仅在命中该技能时才载入</td></tr>
 <tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
 </table>
 
@@ -242,6 +242,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | 批判家 | 输出勘误表 | 校对勘误（一键批量修改） |
 | 批判家 | 段落顺序问题 | 段落重组 |
 | 批判家 | 段落衔接生硬 | 增加过渡 |
+| 批判家 | 华丽修辞过度 | 简化修辞 |
 | 批判家 | 文笔平淡、缺乏亮点 | 神来之笔 / 增加修辞 |
 | 批判家 | 英式中文、句式臃肿 | 优化句式 |
 | 批判家 | AI 模板化表达 / AI 腔 | 请说人话（系统性去 AI 味） |
@@ -614,7 +615,7 @@ Agent Skills 规范的核心设计是**三层渐进加载**，极大降低上下
 | **L2 — 指令** | 完整 `SKILL.md` 正文 | Skill 被激活时（用户的提示词与 description 语义匹配） | 建议 <5000 |
 | **L3 — 资源** | `scripts/`、`references/` 等附属文件 | Skill 显式引用时 | 按需加载 |
 
-> 即使安装几十个 Skill，启动开销也仅约 2500-5000 token，比传统 system prompt 节省约 **90%** 上下文。
+> 即使安装几十个 Skill，启动开销也只有每个技能约 100-200 token（实测本项目 24 个技能 + Agent 合计约 4700 token）。本项目刻意保留了大量触发词变体——**漏触发的代价远大于误触发**，故不以精简描述换取更低的常驻开销。
 
 #### ⚡ 触发机制
 

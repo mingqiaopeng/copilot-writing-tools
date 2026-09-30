@@ -192,21 +192,13 @@ function isCommandNotFound(text, exitCode) {
   return exitCode === 127 || /not recognized|not found|command not found|ENOENT/i.test(text);
 }
 
-// 去重：1) 排除 excludePaths 中的路径段  2) 路径去掉数字后相同的视为重复
+// 去重：仅按 config.excludePaths 排除路径段。
 //
-// 注意：数字指纹会把「第1章.md / 第2章.md」「2024总结.md / 2025总结.md」这类
-// 同前缀不同编号的文档塌缩成一个，静默丢失检索结果。因此指纹还必须包含扩展名，
-// 且只对**文件名主体**做数字归一（目录中的年份/序号不应参与）。
-function pathFingerprint(p) {
-  const slash = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\"));
-  const dir = slash >= 0 ? p.slice(0, slash) : "";
-  const base = slash >= 0 ? p.slice(slash + 1) : p;
-  const dot = base.lastIndexOf(".");
-  const stem = dot > 0 ? base.slice(0, dot) : base;
-  const ext = dot > 0 ? base.slice(dot).toLowerCase() : "";
-  return `${dir}|${stem.replace(/\d+/g, "#")}|${ext}`;
-}
-
+// 历史包袱：曾有"数字指纹去重"（把路径里的数字全删再比对），本意是消除
+// ByCatalog/ByDay 之类的目录副本。但它会把「第1章.md / 第2章.md」
+// 「2024总结.md / 2025总结.md」判为同一份，静默丢掉真实文档——而搜索后端
+// 丢失结果比返回重复项危险得多（重复用户看得见，丢失看不见）。
+// 现已移除。若确有副本目录问题，在 config.excludePaths 中显式配置。
 function deduplicate(rawOutput) {
   if (!rawOutput || !rawOutput.trim()) {
     log(`[去重] 输入为空，返回 []`);
@@ -214,25 +206,17 @@ function deduplicate(rawOutput) {
   }
   const lines = rawOutput.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   log(`[去重] 输入 ${lines.length} 行`);
+
   const excludes = config.excludePaths || [];
   const excludePattern = excludes.length > 0
     ? new RegExp(excludes.map(p => `[\\\\/]${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\\\/]`).join("|"))
     : null;
   const filtered = excludePattern ? lines.filter(p => !excludePattern.test(p)) : lines;
-  const dropped1 = lines.length - filtered.length;
-  if (dropped1 > 0) log(`[去重] 路径排除(${excludes.join(", ")})过滤掉 ${dropped1} 条`);
-  const seen = new Map();
-  for (const p of filtered) {
-    const fingerprint = pathFingerprint(p);
-    if (!seen.has(fingerprint)) {
-      seen.set(fingerprint, p);
-    }
-  }
-  const dropped2 = filtered.length - seen.size;
-  if (dropped2 > 0) log(`[去重] 数字指纹去重掉 ${dropped2} 条`);
-  const result = Array.from(seen.values());
-  log(`[去重] 最终 ${result.length} 条`);
-  return result;
+  const dropped = lines.length - filtered.length;
+  if (dropped > 0) log(`[去重] 路径排除(${excludes.join(", ")})过滤掉 ${dropped} 条`);
+
+  log(`[去重] 最终 ${filtered.length} 条`);
+  return filtered;
 }
 
 const server = new McpServer({

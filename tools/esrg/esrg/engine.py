@@ -9,6 +9,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 
 # ---------------------------------------------------------------------------
 # spawn_run — run a child process, capture output, decode with given encoding
@@ -69,6 +70,14 @@ def is_command_not_found(text: str, exit_code: int) -> bool:
 
 
 def deduplicate(raw_output: str, exclude_paths: list[str]) -> list[str]:
+    """按 exclude_paths 排除路径段。
+
+    历史包袱：曾有"数字指纹去重"（把路径里的数字全删再比对），本意是消除
+    ByCatalog/ByDay 之类的目录副本。但它会把「第1章.md / 第2章.md」
+    「2024总结.md / 2025总结.md」判为同一份，静默丢掉真实文档——搜索后端
+    丢失结果比返回重复项危险得多。现已移除，与 local-search-mcp-server/index.js
+    的 deduplicate 保持一致。若确有副本目录问题，在 config.excludePaths 中显式配置。
+    """
     if not raw_output or not raw_output.strip():
         return []
 
@@ -78,18 +87,9 @@ def deduplicate(raw_output: str, exclude_paths: list[str]) -> list[str]:
         escaped = [re.escape(p) for p in exclude_paths]
         pattern = "|".join(f"[\\\\/]{p}[\\\\/]" for p in escaped)
         exclude_re = re.compile(pattern)
-        filtered = [line for line in lines if not exclude_re.search(line)]
-    else:
-        filtered = lines[:]
+        return [line for line in lines if not exclude_re.search(line)]
 
-    # Numeric-fingerprint dedup: strip all digits; first path wins
-    seen: dict[str, str] = {}
-    for path in filtered:
-        fingerprint = re.sub(r"\d+", "", path)
-        if fingerprint not in seen:
-            seen[fingerprint] = path
-
-    return list(seen.values())
+    return lines
 
 
 # ---------------------------------------------------------------------------
@@ -98,8 +98,12 @@ def deduplicate(raw_output: str, exclude_paths: list[str]) -> list[str]:
 
 _everything_ensured = False
 _everything_ready = False
+_everything_retry_after = 0.0
 _md_count_cache: int | None = None
 RG_GLOBAL_LIMIT = 200
+EVERYTHING_RETRY_SEC = 60.0
+EVERYTHING_PROBE_ROUNDS = 5
+EVERYTHING_PROBE_INTERVAL = 3.0
 
 
 async def count_md_files(es_path: str, kb_root: str) -> int:
@@ -120,11 +124,19 @@ async def count_md_files(es_path: str, kb_root: str) -> int:
 async def ensure_everything(
     es_path: str, kb_root: str, everything_path: str
 ) -> bool:
-    global _everything_ensured, _everything_ready
+    """确保 Everything IPC 就绪。
 
-    if _everything_ensured:
-        return _everything_ready
-    _everything_ensured = True
+    失败后进入退避期再重试——冷启动时固定 3 秒等待往往不够，一旦失败就永久
+    标记会导致整个会话内 es.exe 始终不可用。与 local-search-mcp-server/index.js
+    的 ensureEverything 保持一致。
+    """
+    global _everything_ensured, _everything_ready, _everything_retry_after
+
+    if _everything_ready:
+        return True
+    now = time.monotonic()
+    if _everything_ensured and now < _everything_retry_after:
+        return False
 
     if sys.platform != "win32":
         _everything_ready = True
@@ -160,17 +172,24 @@ async def ensure_everything(
         except (FileNotFoundError, OSError):
             continue
 
-    if launched:
-        await asyncio.sleep(3)
+    if not launched:
+        _everything_ensured = True
+        _everything_retry_after = now + EVERYTHING_RETRY_SEC
+        return False
 
-    # Smoke test: run es.exe with minimal query to verify IPC is alive
-    text, code = await spawn_run(
-        es_path, ["ext:md", "-n", "1", "-path", kb_root], encoding="gbk"
-    )
-    if code == 0:
-        _everything_ready = True
-        return True
+    # Smoke test: probe repeatedly until IPC is alive (Everything may still be indexing)
+    for _ in range(EVERYTHING_PROBE_ROUNDS):
+        await asyncio.sleep(EVERYTHING_PROBE_INTERVAL)
+        _, code = await spawn_run(
+            es_path, ["ext:md", "-n", "1", "-path", kb_root], encoding="gbk"
+        )
+        if code == 0:
+            _everything_ready = True
+            _everything_ensured = True
+            return True
 
+    _everything_ensured = True
+    _everything_retry_after = time.monotonic() + EVERYTHING_RETRY_SEC
     return False
 
 

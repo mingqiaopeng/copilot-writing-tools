@@ -14,6 +14,7 @@
 
 import os
 import re
+import json
 import sys
 import zipfile
 
@@ -355,7 +356,62 @@ def check_doc_counts():
 
 
 # ============================================================
-# 8. 整合包：条目数应等于 ZIP 数 + 1
+# 8. 附属数据文件：JSON 必须可解析
+# ============================================================
+
+def check_json_assets():
+    """风格档案等 JSON 附件必须是合法 JSON。
+
+    历史教训：4 个风格档案因在中文正文里直接用 ASCII 双引号 " " 包裹引文，
+    提前终止 JSON 字符串，全部不是合法 JSON。Skill 用 read 工具读文本时
+    LLM 能容错，但任何脚本化解析都会硬失败。
+    """
+    targets = []
+    style_dir = os.path.join(COPILOT_SKILLS, "统一风格")
+    if os.path.isdir(style_dir):
+        targets += [os.path.join(style_dir, f)
+                    for f in sorted(os.listdir(style_dir)) if f.endswith(".json")]
+    rhetoric = os.path.join(IMA, "golden-phrase", "assets", "good-sentences.jsonl")
+    if os.path.isfile(rhetoric):
+        targets.append(rhetoric)
+
+    bad = []
+    for p in targets:
+        rel = os.path.relpath(p, ROOT).replace(os.sep, "/")
+        if p.endswith(".jsonl"):
+            # JSONL：逐行解析，跳过空行
+            errs = []
+            for i, line in enumerate(read(p).splitlines(), 1):
+                if not line.strip():
+                    continue
+                try:
+                    json.loads(line)
+                except json.JSONDecodeError as e:
+                    if len(errs) < 3:
+                        errs.append(f"第 {i} 行: {e}")
+            if errs:
+                bad.append(f"{rel} — {len(errs)}+ 行解析失败（{errs[0]}）")
+            continue
+        try:
+            json.loads(read(p))
+        except json.JSONDecodeError as e:
+            # 给出定位提示：值内误用 ASCII 双引号是本项目的典型成因
+            hint = ""
+            if e.colno:
+                line = read(p).splitlines()[e.lineno - 1] if e.lineno <= len(read(p).splitlines()) else ""
+                seg = line[max(0, e.colno - 20): e.colno + 20]
+                if '"' in seg.strip():
+                    hint = f"（疑似值内误用 ASCII 双引号，位置附近: …{seg}…）"
+            bad.append(f"{rel}: {e}{hint}")
+
+    if bad:
+        fail("JSON 附件", "；".join(bad))
+    elif targets:
+        ok("JSON 附件", f"{len(targets)} 个文件均可解析")
+
+
+# ============================================================
+# 9. 整合包：条目数应等于 ZIP 数 + 1
 # ============================================================
 
 def check_rar():
@@ -382,6 +438,7 @@ CHECKS = [
     check_analyze_copies,
     check_mcp_tools,
     check_doc_counts,
+    check_json_assets,
     check_rar,
 ]
 
