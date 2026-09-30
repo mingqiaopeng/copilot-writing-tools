@@ -463,7 +463,7 @@ copilot-writing-tools/
 | [petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop) | 检测模式与编辑原则（"命名模式是可核对的证据"） |
 | [Shirhussain/humanize](https://github.com/Shirhussain/humanize) | 文体裁量、反误伤清单（无效信号） |
 | [hardikpandya/stop-slop](https://github.com/hardikpandya/stop-slop) | 五维评分制 |
-| [aplaceforallmystuff/the-antislop](https://github.com/aplaceforallmystuff/the-antislop) | 累加扣分制、星座测试 |
+| [aplaceforallmystuff/the-antislop](https://github.com/aplaceforallmystuff/the-antislop) | 累加扣分制 |
 
 ## 🎯 使用建议
 
