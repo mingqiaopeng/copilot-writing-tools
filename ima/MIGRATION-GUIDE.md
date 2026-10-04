@@ -32,6 +32,7 @@
 | `.copilot/skills/优化句式/SKILL.md` | `polish` |
 | `.copilot/skills/量化分析/SKILL.md` | `stats` |
 | `.copilot/skills/请说人话/SKILL.md` | `de-ai` |
+| `.copilot/skills/规矩启蒙/SKILL.md` | `baseline` |
 
 > IMA 侧技能名一律为 kebab-case 英文，且 `name` 字段、目录名、ZIP 包内目录名三者必须一致。
 

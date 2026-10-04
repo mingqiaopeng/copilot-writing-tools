@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>专为现代中文非虚构严肃文稿写作设计的 AI 辅助工具链——从头脑风暴到最终校阅，一站式覆盖完整写作流程。</strong><br />
-  <em>4 个 Agent · 20 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
+  <em>4 个 Agent · 21 个 Skill · 基于 GitHub Copilot Agent Skills 开放规范 · 本地优先 · 自然语言驱动</em><br />
 	  <em>本项目"蒸馏"了开发者 10 年来从事文稿起草工作的近一千个技巧、经验与知识点（其中 Skill 涵盖 744 个、Agent 涵盖 225 个），并将其有机融合到工作流中。</em>
 </p>
 
@@ -43,11 +43,11 @@ irm https://raw.githubusercontent.com/mingqiaopeng/copilot-writing-tools/master/
 打开 PowerShell 粘贴回车即可。Agent 与 Skill 自动部署到 `~/.copilot/`，**对所有项目全局生效**。重启 VS Code 后即可使用。
 
 > [!TIP]
-> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署 Copilot 端全部内容（Agent、20 个 Skill 及其 `references/` 附属规则集、量化分析引擎、MCP 服务器）至 `~/.copilot/`。
+> **本地安装（推荐离线环境）**：双击仓库根目录的 `local_install.bat`，一键部署 Copilot 端全部内容（Agent、21 个 Skill 及其 `references/` 附属规则集、量化分析引擎、MCP 服务器）至 `~/.copilot/`。
 >
 > 亦可手动将 `.copilot/agents/` 和 `.copilot/skills/` 整个目录复制到 `~/.copilot/`（全局生效）。
 >
-> 🌏 **IMA 端另行部署**：腾讯 ima.copilot 侧的 24 个 Skill 以 ZIP 形式分发，需单独上传，详见 [「IMA 端（腾讯 ima.copilot）」](#-ima-端腾讯-imacopilot)。
+> 🌏 **IMA 端另行部署**：腾讯 ima.copilot 侧的 25 个 Skill 以 ZIP 形式分发，需单独上传，详见 [「IMA 端（腾讯 ima.copilot）」](#-ima-端腾讯-imacopilot)。
 
 > [!IMPORTANT]
 > ## ⚠️ 本项目不包含"生成"功能
@@ -131,7 +131,7 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="15%">层面</th><th width="25%">选择</th><th width="60%">理由</th></tr>
 <tr><td>🖥️ 平台</td><td>VS Code + GitHub Copilot Chat</td><td>全球最大的代码/文本编辑器，Copilot Chat 作为 AI 交互入口</td></tr>
-<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，20 个 Skill + 4 个 Agent 全部 description 合计约 4700 token（启动即加载）</td></tr>
+<tr><td>📐 规范</td><td>Agent Skills 开放规范（<code>SKILL.md</code> + <code>.agent.md</code>）</td><td>三层渐进加载，21 个 Skill + 4 个 Agent 全部 description 合计约 4900 token（启动即加载）</td></tr>
 <tr><td>🧠 触发</td><td>语义匹配</td><td>用户说人话，模型自动匹配 Skill，无需记命令</td></tr>
 <tr><td>🔍 搜索</td><td>Everything (es.exe) + ripgrep</td><td>纯本地、零延迟的文件名与内容搜索，无需向量数据库</td></tr>
 <tr><td>💎 素材库</td><td>JSONL 修辞句子库</td><td>本地金句素材库，MCP 工具搜索匹配，「神来之笔」Skill 直接调用，支持按主题和标签筛选</td></tr>
@@ -142,18 +142,18 @@ AI 生成的文本高度趋同——排比起手 → "首先/其次/最后" → 
 <table width="100%">
 <tr><th width="12%">角色</th><th width="8%">数量</th><th width="45%">职责</th><th width="35%">原则</th></tr>
 <tr><td>🤖 Agent</td><td>4 个</td><td>头脑风暴、结构分析、文稿审核、知识库检索</td><td><strong>只诊断，不修改文件</strong></td></tr>
-<tr><td>🔧 Skill</td><td>20 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
+<tr><td>🔧 Skill</td><td>21 个</td><td>中心句提炼、段落重组、校对勘误、标题优化……</td><td><strong>确认或直接修改文件</strong></td></tr>
 <tr><td>🔗 互推</td><td>—</td><td>Agent 诊断完成后主动推荐可用 Skill</td><td><strong>诊断 → 修改 闭环</strong></td></tr>
 </table>
 
 **核心优势：**
 
 <table width="100%">
-<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，20 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
+<tr><td width="5%">🔄</td><td width="18%"><strong>全流程覆盖</strong></td><td>从头脑风暴到最终校对，21 个 Skill 覆盖写作每个环节，无需切换工具</td></tr>
 <tr><td>🔬</td><td><strong>结构化诊断</strong></td><td>分析师 Agent 对中文文稿做分层结构诊断和逻辑关系梳理——市面上独一无二</td></tr>
 <tr><td>📝</td><td><strong>出版级审核</strong></td><td>批判家 Agent 按 🔴致命/🟠严重/🟡一般/🔵建议 四级标准审核，输出可执行勘误表</td></tr>
 <tr><td>🏠</td><td><strong>本地优先</strong></td><td>所有操作在你的文件中完成，数据不出本地。档案员搜索基于 Everything 索引和 ripgrep</td></tr>
-<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载——会话启动只加载每个技能的 <code>name</code> + <code>description</code>（约 4700 token），完整正文仅在命中该技能时才载入</td></tr>
+<tr><td>⚡</td><td><strong>极低上下文开销</strong></td><td>基于三层渐进加载——会话启动只加载每个技能的 <code>name</code> + <code>description</code>（约 4900 token），完整正文仅在命中该技能时才载入</td></tr>
 <tr><td>🗣️</td><td><strong>自然语言驱动</strong></td><td>"帮我审一下""想几个方向""段落太多了拆一下"——说人话就能触发</td></tr>
 </table>
 
@@ -279,6 +279,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 | **统一风格** | 统一风格、风格统一、换个风格、风格转换、改成XX风格 | 统一文稿各部分风格：指定风格改写 / 自动检测统一 / 以指定段落为基准 |
 | **量化分析** | 量化分析、量化评估、量化数据分析、给这篇文章打分 | 多维度量化分析 + AI 评分，输出标准化 JSON 报告（依赖 jieba） |
 | **请说人话** | 请说人话、说人话、去AI味、去AI腔、humanize、像AI写的 | 检测并清除 AI 味：强 AI 味（典型句式、AI 残留）直接改；弱 AI 味（词汇密度、节奏工整等）编号征询后改 |
+| **规矩启蒙** | 规矩启蒙、启蒙、初始化写作标准、初始化写作规则、设定写作标准、确立写作基线 | 一次性确立写作基线：语言标点、句式铁律、词汇禁区、事实纪律、量化阈值五类规则固化为默认标准 |
 
 ### ✅ 确认后修改（先建议，确认后改）
 
@@ -326,7 +327,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 
 ## 🌏 IMA 端（腾讯 ima.copilot）
 
-同一套能力在腾讯 [ima.copilot](https://ima.qq.com/) 上以 **24 个 Skill** 的形式提供——IMA 侧不区分 Agent 与 Skill，因此 Copilot 侧的 4 个 Agent 在 IMA 侧同样落为 Skill，合计 20 + 4 = 24 个，功能一一对应。
+同一套能力在腾讯 [ima.copilot](https://ima.qq.com/) 上以 **25 个 Skill** 的形式提供——IMA 侧不区分 Agent 与 Skill，因此 Copilot 侧的 4 个 Agent 在 IMA 侧同样落为 Skill，合计 20 + 4 = 24 个，功能一一对应。
 
 ### 安装
 
@@ -340,7 +341,7 @@ Agent 具有独立的"人格"设定和交互风格，适合多轮对话场景，
 
 | 维度 | Copilot 端 | IMA 端 |
 |------|-----------|--------|
-| 技能数 | 4 Agent + 20 Skill | 24 Skill（Agent 与 Skill 不分） |
+| 技能数 | 4 Agent + 21 Skill | 25 Skill（Agent 与 Skill 不分） |
 | 名称 | 中文名 | kebab-case 英文名（`请说人话` → `de-ai`） |
 | 编辑约束 | 各 Skill 含「编辑策略（铁律）」 | 不含——IMA 编辑走平台自身约定 |
 | 脚本调用 | `~/.copilot/tools/scripts/` | `/sandbox/workspace/skills/<name>/scripts/`（不支持跨技能共享，需逐份内置） |
@@ -401,10 +402,11 @@ copilot-writing-tools/
 │       ├── 传达提纲/                           #     政论文章结构化摘要提取
 │       ├── 优化句式/                           #     消除英式中文与翻译腔
 │       ├── 量化分析/                           #     多维度定量分析 + 评分 JSON 报告
-│       └── 请说人话/                           #     去 AI 味：AI 高频词/句式/结构/节奏四层检测改写
+│       ├── 请说人话/                           #     去 AI 味：AI 高频词/句式/结构/节奏四层检测改写
+│       └── 规矩启蒙/                               #     写作基线标准：语言/句式/词汇/事实/量化五类规则固化
 │
-├── ima/                                        # 🌏 IMA 适配层：.copilot 的 24 个技能移植版
-│   ├── <skill-name>/                           #   24 个技能目录（kebab-case，映射见 MIGRATION-GUIDE.md）
+├── ima/                                        # 🌏 IMA 适配层：.copilot 的 25 个技能移植版
+│   ├── <skill-name>/                           #   25 个技能目录（kebab-case，映射见 MIGRATION-GUIDE.md）
 │   ├── packages/                               #   打包上传用 ZIP（每技能一个 + 整合包）
 │   ├── MIGRATION-GUIDE.md                      #   Copilot → IMA 同步流程与映射表
 │   ├── ima-skill开发指南.md                    #   IMA 平台规范
@@ -615,7 +617,7 @@ Agent Skills 规范的核心设计是**三层渐进加载**，极大降低上下
 | **L2 — 指令** | 完整 `SKILL.md` 正文 | Skill 被激活时（用户的提示词与 description 语义匹配） | 建议 <5000 |
 | **L3 — 资源** | `scripts/`、`references/` 等附属文件 | Skill 显式引用时 | 按需加载 |
 
-> 即使安装几十个 Skill，启动开销也只有每个技能约 100-200 token（实测本项目 24 个技能 + Agent 合计约 4700 token）。本项目刻意保留了大量触发词变体——**漏触发的代价远大于误触发**，故不以精简描述换取更低的常驻开销。
+> 即使安装几十个 Skill，启动开销也只有每个技能约 100-200 token（实测本项目 25 个技能 + Agent 合计约 4900 token）。本项目刻意保留了大量触发词变体——**漏触发的代价远大于误触发**，故不以精简描述换取更低的常驻开销。
 
 #### ⚡ 触发机制
 

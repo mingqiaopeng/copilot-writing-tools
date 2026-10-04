@@ -75,6 +75,13 @@ def check_install_arrays():
     listed_agents = set(re.findall(r'"([^"]+)"', m_agents.group(1)))
     listed_skills = set(re.findall(r'"([^"]+)"', m_skills.group(1)))
 
+    # 附属资源（L3）登记：带 references/ 的 Skill 必须登记，否则安装后引用落空
+    m_res = re.search(r"\$SkillResources\s*=\s*@\{(.*?)\n\}", install, re.S)
+    registered_res = {}
+    if m_res:
+        for m in re.finditer(r'"([^"]+)"\s*=\s*@\((.*?)\)', m_res.group(1), re.S):
+            registered_res[m.group(1)] = set(re.findall(r'"([^"]+)"', m.group(2)))
+
     disk_agents = {
         f for f in os.listdir(COPILOT_AGENTS) if f.endswith(".agent.md")
     } if os.path.isdir(COPILOT_AGENTS) else set()
@@ -93,13 +100,44 @@ def check_install_arrays():
         fail("install $Skills", f"数组中的技能目录不存在：{sorted(ghost_skills)}")
     if ghost_agents:
         fail("install $Agents", f"数组中的 Agent 文件不存在：{sorted(ghost_agents)}")
+
+    # 实际存在的 references 文件 vs $SkillResources 登记
+    actual_res = {}
+    for s in disk_skills:
+        ref_dir = os.path.join(COPILOT_SKILLS, s, "references")
+        if os.path.isdir(ref_dir):
+            actual_res[s] = {
+                f"references/{f}" for f in os.listdir(ref_dir)
+                if f.endswith(".md")
+            }
+    for s, files in actual_res.items():
+        unregistered = files - registered_res.get(s, set())
+        stale = registered_res.get(s, set()) - files
+        if unregistered:
+            fail("install $SkillResources",
+                 f"{s}/references 未登记（安装后技能引用落空）：{sorted(unregistered)}")
+        if stale:
+            fail("install $SkillResources",
+                 f"{s} 登记了不存在的附属文件：{sorted(stale)}")
+    for s in registered_res:
+        if s not in actual_res:
+            fail("install $SkillResources", f"{s} 无 references/ 目录却登记了附属文件")
+
     if not (missing_skills or missing_agents or ghost_skills or ghost_agents):
-        ok("install 数组", f"{len(listed_agents)} 个 Agent、{len(listed_skills)} 个 Skill 与磁盘一致")
+        n_res = sum(len(v) for v in actual_res.values())
+        ok("install 数组",
+           f"{len(listed_agents)} 个 Agent、{len(listed_skills)} 个 Skill 与磁盘一致"
+           + (f"，{n_res} 个附属文件已登记" if actual_res else ""))
 
 
 # ============================================================
 # 2. Copilot 侧：SKILL.md 结构约定
 # ============================================================
+
+# 「规矩启蒙」是例外：它是写作标准的初始化器，产物是写入长期记忆的规则文本，
+# 不操作任何文件，因此不需要「编辑策略（铁律）」与「操作范围」。它要求的是「记忆写入提示」。
+EDIT_POLICY_EXEMPT = {"规矩启蒙", "baseline"}
+
 
 def check_copilot_skills():
     required = ["当前角色", "操作范围规则", "编辑策略（铁律）"]
@@ -117,11 +155,19 @@ def check_copilot_skills():
         elif m_name.group(1).strip() != name:
             fail(f"Copilot Skill/{name}", f"name 字段「{m_name.group(1).strip()}」与目录名不一致")
 
-        missing = [s for s in required if f"## {s}" not in text]
-        if missing:
-            fail(f"Copilot Skill/{name}", f"缺少必含章节：{missing}")
+        if name in EDIT_POLICY_EXEMPT:
+            if "编辑策略" in text:
+                fail(f"Copilot Skill/{name}",
+                     "初始化型技能不操作文件，不应含「编辑策略（铁律）」")
+            elif "记忆" not in text:
+                fail(f"Copilot Skill/{name}",
+                     "初始化型技能必须包含写入长期记忆的指引")
+        else:
+            missing = [s for s in required if f"## {s}" not in text]
+            if missing:
+                fail(f"Copilot Skill/{name}", f"缺少必含章节：{missing}")
 
-        if not missing and (not m_name or m_name.group(1).strip() == name):
+        if not m_name or m_name.group(1).strip() == name:
             ok(f"Copilot Skill/{name}")
 
 
@@ -197,9 +243,14 @@ def check_ima_skills():
             if not fm.get("description"):
                 problems.append("缺少 description")
 
-        for section in ["技能概述", "操作范围"]:
-            if f"## {section}" not in text:
-                problems.append(f"缺少必含章节「{section}」")
+        # 「规矩启蒙」类初始化技能不按选区操作，以「适用场景」取代「操作范围」
+        if name in EDIT_POLICY_EXEMPT:
+            if "## 操作范围" in text:
+                problems.append("初始化型技能不应含「操作范围」（它不按选区操作）")
+        else:
+            for section in ["技能概述", "操作范围"]:
+                if f"## {section}" not in text:
+                    problems.append(f"缺少必含章节「{section}」")
         if "编辑策略" in text:
             problems.append("含 Copilot 侧专属的「编辑策略（铁律）」，IMA 侧应删除")
         if re.search(r"~\/\.copilot|replace_string_in_file|sanitize-filename", text):

@@ -36,13 +36,15 @@ $Skills = @(
     "传达提纲",
     "优化句式",
     "量化分析",
-    "请说人话"
+    "请说人话",
+    "规矩启蒙"
 )
 
 # 附属资源（L3）：SKILL.md 中会以相对路径显式引用，缺失则技能残废。
 # 新增带 references/ 的技能时必须在此登记，否则一键安装会漏装。
 $SkillResources = @{
     "请说人话" = @("references/checklist.md", "references/scoring.md")
+    "规矩启蒙" = @("references/source-rules.md")
 }
 
 Write-Host ""
